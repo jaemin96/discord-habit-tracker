@@ -2,8 +2,8 @@
 
 ## Phase 0: 프로젝트 초기 설정
 
-- [ ] NestJS 프로젝트 생성
-- [ ] Git 저장소 초기화 및 .gitignore 설정
+- [x] NestJS 프로젝트 생성
+- [x] Git 저장소 초기화 및 .gitignore 설정
 - [ ] 필수 패키지 설치 (Prisma, Discord.js, axios 등)
 - [ ] 환경변수 파일 설정 (.env)
 - [ ] Discord Bot 생성 및 토큰 발급

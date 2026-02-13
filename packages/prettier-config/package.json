@@ -1,0 +1,17 @@
+{
+  "name": "@habit-tracker/prettier-config",
+  "version": "1.0.3",
+  "description": "Shared Prettier configuration",
+  "license": "MIT",
+  "private": true,
+  "main": "index.cjs",
+  "files": [
+    "index.cjs"
+  ],
+  "peerDependencies": {
+    "prettier": "^3.0.0"
+  },
+  "devDependencies": {
+    "prettier": "^3.1.1"
+  }
+}

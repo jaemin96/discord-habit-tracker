@@ -1,0 +1,27 @@
+# NestJS specific build output
+dist/
+
+# Environment variables (NestJS specific configs)
+.env.*.local
+
+# NestJS test coverage
+coverage/
+
+# NestJS debug files
+tsconfig.build.tsbuildinfo
+
+# Upload directories (if using file uploads)
+uploads/
+temp/
+
+# Database files (if using local SQLite for dev)
+*.db-journal
+
+# Session storage
+sessions/
+
+# PM2 logs (if using PM2 for deployment)
+.pm2/
+
+# NestJS CLI
+.nest-cli.json.cache
