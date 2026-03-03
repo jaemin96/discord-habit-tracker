@@ -1,0 +1,64 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model Checkin {
+  id           String   @id @default(uuid())
+  userId       String
+  date         DateTime @default(now())
+  type         String
+  description  String?
+  customFields Json?
+
+  @@index([userId, date])
+}
+
+model Workout {
+  id            String   @id @default(uuid())
+  userId        String
+  date          DateTime @default(now())
+  type          String
+  duration      Int?
+  calories      Int?
+  description   String?
+  source        String   @default("manual")
+  appleHealthId String?
+
+  @@index([userId, date])
+}
+
+model Photo {
+  id           String   @id @default(uuid())
+  userId       String
+  date         DateTime @default(now())
+  fileName     String
+  fileUrl      String
+  fileSize     Int
+  camera       String?
+  lens         String?
+  iso          Int?
+  shutterSpeed String?
+  aperture     String?
+  focalLength  Int?
+  location     String?
+  description  String?
+
+  @@index([userId, date])
+  @@index([camera])
+}
+
+model StatisticsCache {
+  id        String   @id @default(uuid())
+  userId    String
+  period    String
+  startDate DateTime
+  data      Json
+
+  @@unique([userId, period, startDate])
+}

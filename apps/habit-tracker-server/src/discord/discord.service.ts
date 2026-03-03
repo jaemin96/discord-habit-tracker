@@ -49,17 +49,13 @@ export class DiscordService {
     const commandsJSON = commands.map((cmd) => cmd.toJSON());
 
     try {
-      this.logger.log(
-        `📝 Registering ${commands.length} guild commands...`,
-      );
+      this.logger.log(`📝 Registering ${commands.length} guild commands...`);
 
       await this.rest.put(Routes.applicationGuildCommands(clientId, guildId), {
         body: commandsJSON,
       });
 
-      this.logger.log(
-        `✅ Successfully registered ${commands.length} guild commands`,
-      );
+      this.logger.log(`✅ Successfully registered ${commands.length} guild commands`);
     } catch (error) {
       this.logger.error('❌ Failed to register guild commands', error);
       throw error;

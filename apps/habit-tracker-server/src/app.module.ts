@@ -4,6 +4,7 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { DiscordModule } from './discord/discord.module';
 import configuration from './config/configuration';
+import { PrismaModule } from './database/prisma.module';
 
 @Module({
   imports: [
@@ -12,6 +13,7 @@ import configuration from './config/configuration';
       load: [configuration],
       envFilePath: ['.env.local', '.env'],
     }),
+    PrismaModule,
     DiscordModule,
   ],
   controllers: [AppController],

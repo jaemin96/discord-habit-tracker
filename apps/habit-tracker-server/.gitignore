@@ -2,6 +2,7 @@
 dist/
 
 # Environment variables (NestJS specific configs)
+.env
 .env.*.local
 
 # NestJS test coverage
@@ -16,6 +17,18 @@ temp/
 
 # Database files (if using local SQLite for dev)
 *.db-journal
+
+# Supabase local/dev artifacts
+supabase/.temp/
+supabase/.branches/
+supabase/config.local.toml
+
+# Prisma local/generated artifacts
+prisma/dev.db
+prisma/dev.db-journal
+prisma/*.db
+prisma/*.db-journal
+prisma/generated/
 
 # Session storage
 sessions/
