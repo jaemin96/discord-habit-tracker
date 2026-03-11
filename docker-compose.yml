@@ -1,0 +1,12 @@
+services:
+  server:
+    build:
+      context: .
+      dockerfile: apps/habit-tracker-server/Dockerfile
+    image: habit-tracker-server:local
+    container_name: habit-tracker-server
+    restart: unless-stopped
+    env_file:
+      - ${HABIT_TRACKER_SERVER_ENV_FILE:-apps/habit-tracker-server/.env}
+    ports:
+      - "${HABIT_TRACKER_SERVER_PORT:-4000}:4000"
