@@ -4,42 +4,42 @@
 
 - [x] NestJS 프로젝트 생성
 - [x] Git 저장소 초기화 및 .gitignore 설정
-- [ ] 필수 패키지 설치 (Prisma, Discord.js, axios 등)
-- [ ] 환경변수 파일 설정 (.env)
-- [ ] Discord Bot 생성 및 토큰 발급
-- [ ] Discord Bot을 개발 서버에 초대
-- [ ] Supabase 프로젝트 생성
-- [ ] Supabase 연결 정보 확인
+- [x] 필수 패키지 설치 (Prisma, Discord.js, axios 등)
+- [x] 환경변수 파일 설정 (.env)
+- [x] Discord Bot 생성 및 토큰 발급
+- [x] Discord Bot을 개발 서버에 초대
+- [x] Supabase 프로젝트 생성
+- [x] Supabase 연결 정보 확인
 
 ## Phase 1: 데이터베이스 구축
 
-- [ ] Prisma 초기 설정 (schema.prisma 파일)
-- [ ] Checkin 모델 정의
-- [ ] Workout 모델 정의
-- [ ] Photo 모델 정의
-- [ ] StatisticsCache 모델 정의
-- [ ] Prisma 마이그레이션 실행
-- [ ] Prisma Client 생성 확인
+- [x] Prisma 초기 설정 (schema.prisma 파일)
+- [x] Checkin 모델 정의
+- [x] Workout 모델 정의
+- [x] Photo 모델 정의
+- [x] StatisticsCache 모델 정의
+- [x] Prisma 마이그레이션 실행
+- [x] Prisma Client 생성 확인
 
 ## Phase 2: Discord Bot 기본 구조
 
-- [ ] Discord 모듈 생성
-- [ ] Bot Gateway 설정 및 연결 테스트
-- [ ] 명령어 핸들러 기본 구조 작성
-- [ ] 간단한 ping/pong 명령어로 연결 테스트
+- [x] Discord 모듈 생성
+- [x] Bot Gateway 설정 및 연결 테스트
+- [x] 명령어 핸들러 기본 구조 작성
+- [x] 간단한 ping/pong 명령어로 연결 테스트
 
 ## Phase 3: 체크인 모듈 (최우선)
 
-- [ ] Checkin 모듈 생성
-- [ ] CheckinService 기본 CRUD 메서드 작성
-- [ ] /체크인 명령어 구현 (기본)
-- [ ] 체크인 타입 입력 받기 (카메라외출, 업무단절)
-- [ ] 메모 옵션 추가
-- [ ] DB 저장 로직 연결
-- [ ] 오늘 체크인 조회 기능
-- [ ] 주간 체크인 카운트 기능
+- [x] Checkin 모듈 생성
+- [x] CheckinService 기본 CRUD 메서드 작성
+- [x] /체크인 명령어 구현 (기본)
+- [x] 체크인 타입 입력 받기 (카메라외출, 업무단절)
+- [x] 메모 옵션 추가
+- [x] DB 저장 로직 연결
+- [x] 오늘 체크인 조회 기능
+- [x] 주간 체크인 카운트 기능
 - [ ] Discord Modal을 이용한 커스텀 폼 구현
-- [ ] 에러 핸들링 및 사용자 피드백
+- [x] 에러 핸들링 및 사용자 피드백
 
 ## Phase 4: 기본 통계 API
 

@@ -8,8 +8,9 @@ import { DiscordService } from './discord.service';
 import { ReadyEventHandler } from './events/ready.event';
 import { InteractionEventHandler } from './events/interaction.event';
 import { PingCommand } from './commands/ping.command';
-import { HelloCommand } from './commands/hello.command';
-import { CheckinTestCommand } from './commands/checkin-test.command';
+import { CheckinCommand } from '../checkin/commands/checkin.command';
+import { TodayCheckinCommand } from '../checkin/commands/today-checkin.command';
+import { WeeklyCheckinCommand } from '../checkin/commands/weekly-checkin.command';
 
 @Injectable()
 export class DiscordGateway implements OnModuleInit, OnModuleDestroy {
@@ -20,8 +21,9 @@ export class DiscordGateway implements OnModuleInit, OnModuleDestroy {
     private readonly readyEventHandler: ReadyEventHandler,
     private readonly interactionEventHandler: InteractionEventHandler,
     private readonly pingCommand: PingCommand,
-    private readonly helloCommand: HelloCommand,
-    private readonly checkinTestCommand: CheckinTestCommand,
+    private readonly checkinCommand: CheckinCommand,
+    private readonly todayCheckinCommand: TodayCheckinCommand,
+    private readonly weeklyCheckinCommand: WeeklyCheckinCommand,
   ) {}
 
   async onModuleInit() {
@@ -29,23 +31,18 @@ export class DiscordGateway implements OnModuleInit, OnModuleDestroy {
 
     const client = this.discordService.getClient();
 
-    // 이벤트 핸들러 등록
     this.readyEventHandler.register(client);
 
-    // 커맨드 수집
     const commands = [
       this.pingCommand,
-      this.helloCommand,
-      this.checkinTestCommand,
+      this.checkinCommand,
+      this.todayCheckinCommand,
+      this.weeklyCheckinCommand,
     ];
 
-    // Interaction 핸들러 등록
     this.interactionEventHandler.register(client, commands);
 
-    // 봇 연결
     await this.discordService.connect();
-
-    // Guild 커맨드 등록
     await this.discordService.registerGuildCommands(commands);
 
     this.logger.log('✅ Discord Gateway initialized');

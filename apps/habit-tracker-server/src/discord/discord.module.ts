@@ -5,24 +5,21 @@ import { DiscordGateway } from './discord.gateway';
 import { ReadyEventHandler } from './events/ready.event';
 import { InteractionEventHandler } from './events/interaction.event';
 import { PingCommand } from './commands/ping.command';
-import { HelloCommand } from './commands/hello.command';
-import { CheckinTestCommand } from './commands/checkin-test.command';
+import { CheckinModule } from '../checkin/checkin.module';
 
 @Module({
+  imports: [CheckinModule],
   providers: [
     DiscordService,
     {
       provide: Client,
-      useFactory: (discordService: DiscordService) =>
-        discordService.getClient(),
+      useFactory: (discordService: DiscordService) => discordService.getClient(),
       inject: [DiscordService],
     },
     DiscordGateway,
     ReadyEventHandler,
     InteractionEventHandler,
     PingCommand,
-    HelloCommand,
-    CheckinTestCommand,
   ],
   exports: [DiscordService],
 })
