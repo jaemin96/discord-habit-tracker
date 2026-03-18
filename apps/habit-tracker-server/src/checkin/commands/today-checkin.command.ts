@@ -36,16 +36,32 @@ export class TodayCheckinCommand implements ICommand {
     if (checkins.length === 0) {
       embed.setDescription('오늘 아직 체크인이 없습니다.');
     } else {
+      const TYPE_META: Record<string, { emoji: string; label: string }> = {
+        camera_out: { emoji: '📸', label: '카메라외출' },
+        work_disconnect: { emoji: '💼', label: '업무단절' },
+        workout: { emoji: '🏋️', label: '운동' },
+        report: { emoji: '📋', label: '보고서 작성' },
+      };
+      const REPORT_LABEL: Record<string, string> = {
+        daily: '일일보고',
+        weekly: '주간보고',
+        monthly: '월간보고',
+      };
+
       const lines = checkins.map((c) => {
-        const emoji = c.type === 'camera_out' ? '📸' : '💼';
-        const typeName = c.type === 'camera_out' ? '카메라외출' : '업무단절';
+        const meta = TYPE_META[c.type] ?? { emoji: '✅', label: c.type };
+        const reportType = (c.customFields as any)?.reportType;
+        const label =
+          c.type === 'report' && reportType
+            ? REPORT_LABEL[reportType] ?? meta.label
+            : meta.label;
         const time = new Date(c.date).toLocaleTimeString('ko-KR', {
           timeZone: 'Asia/Seoul',
           hour: '2-digit',
           minute: '2-digit',
         });
         const memo = c.description ? ` — ${c.description}` : '';
-        return `${emoji} **${typeName}** ${time}${memo}`;
+        return `${meta.emoji} **${label}** ${time}${memo}`;
       });
 
       embed

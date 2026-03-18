@@ -2,22 +2,78 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 import { Checkin } from '@prisma/client';
 
-export type CheckinType = 'camera_out' | 'work_disconnect';
+export type CheckinType = 'camera_out' | 'work_disconnect' | 'workout' | 'report';
+export type ReportType = 'daily' | 'weekly' | 'monthly';
 
 @Injectable()
 export class CheckinService {
   constructor(private readonly prisma: PrismaService) {}
 
+  async hasTodayCheckin(
+    userId: string,
+    type: CheckinType,
+    reportType?: ReportType,
+  ): Promise<boolean> {
+    const now = new Date();
+
+    let rangeStart: Date;
+    let rangeEnd: Date;
+
+    if (reportType === 'weekly') {
+      // 이번 주 월~일
+      rangeStart = new Date(now);
+      rangeStart.setDate(now.getDate() - ((now.getDay() + 6) % 7));
+      rangeStart.setHours(0, 0, 0, 0);
+      rangeEnd = new Date(rangeStart);
+      rangeEnd.setDate(rangeStart.getDate() + 6);
+      rangeEnd.setHours(23, 59, 59, 999);
+    } else if (reportType === 'monthly') {
+      // 이번 달 1일~말일
+      rangeStart = new Date(now.getFullYear(), now.getMonth(), 1);
+      rangeEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
+    } else {
+      // 오늘 하루
+      rangeStart = new Date(now);
+      rangeStart.setHours(0, 0, 0, 0);
+      rangeEnd = new Date(now);
+      rangeEnd.setHours(23, 59, 59, 999);
+    }
+
+    if (type === 'report' && reportType) {
+      const existing = await this.prisma.checkin.findFirst({
+        where: {
+          userId,
+          type,
+          date: { gte: rangeStart, lte: rangeEnd },
+          customFields: { path: ['reportType'], equals: reportType },
+        },
+      });
+      return !!existing;
+    }
+
+    const existing = await this.prisma.checkin.findFirst({
+      where: {
+        userId,
+        type,
+        date: { gte: rangeStart, lte: rangeEnd },
+      },
+    });
+
+    return !!existing;
+  }
+
   async create(
     userId: string,
     type: CheckinType,
     memo?: string,
+    reportType?: ReportType,
   ): Promise<Checkin> {
     return this.prisma.checkin.create({
       data: {
         userId,
         type,
         description: memo,
+        customFields: reportType ? { reportType } : undefined,
       },
     });
   }
@@ -45,7 +101,11 @@ export class CheckinService {
     total: number;
     camera_out: number;
     work_disconnect: number;
-    dates: string[];
+    workout: number;
+    report: { total: number; daily: number; weekly: number; monthly: number };
+    // 월(0)~일(6) 인덱스, 해당 날에 체크인한 타입 목록
+    dailyTypes: Record<number, CheckinType[]>;
+    weekStart: Date;
   }> {
     const startOfWeek = new Date();
     startOfWeek.setDate(startOfWeek.getDate() - startOfWeek.getDay() + 1); // 월요일
@@ -58,36 +118,70 @@ export class CheckinService {
     const checkins = await this.prisma.checkin.findMany({
       where: {
         userId,
-        date: {
-          gte: startOfWeek,
-          lte: endOfWeek,
-        },
+        date: { gte: startOfWeek, lte: endOfWeek },
       },
       orderBy: { date: 'asc' },
     });
 
     const camera_out = checkins.filter((c) => c.type === 'camera_out').length;
-    const work_disconnect = checkins.filter(
-      (c) => c.type === 'work_disconnect',
-    ).length;
+    const work_disconnect = checkins.filter((c) => c.type === 'work_disconnect').length;
+    const workout = checkins.filter((c) => c.type === 'workout').length;
 
-    const uniqueDates = [
-      ...new Set(
-        checkins.map((c) =>
-          new Date(c.date).toLocaleDateString('ko-KR', {
-            timeZone: 'Asia/Seoul',
-            month: 'numeric',
-            day: 'numeric',
-          }),
-        ),
-      ),
-    ];
+    const reports = checkins.filter((c) => c.type === 'report');
+    const reportCount = {
+      total: reports.length,
+      daily: reports.filter((c) => (c.customFields as any)?.reportType === 'daily').length,
+      weekly: reports.filter((c) => (c.customFields as any)?.reportType === 'weekly').length,
+      monthly: reports.filter((c) => (c.customFields as any)?.reportType === 'monthly').length,
+    };
+
+    // 요일별 체크인 타입 집계 (0=월 ~ 6=일)
+    const dailyTypes: Record<number, CheckinType[]> = {
+      0: [], 1: [], 2: [], 3: [], 4: [], 5: [], 6: [],
+    };
+    for (const c of checkins) {
+      const date = new Date(c.date);
+      // getDay(): 0=일,1=월..6=토 → 월=0 기준으로 변환
+      const dayIndex = (date.getDay() + 6) % 7;
+      if (!dailyTypes[dayIndex].includes(c.type as CheckinType)) {
+        dailyTypes[dayIndex].push(c.type as CheckinType);
+      }
+    }
 
     return {
       total: checkins.length,
       camera_out,
       work_disconnect,
-      dates: uniqueDates,
+      workout,
+      report: reportCount,
+      dailyTypes,
+      weekStart: startOfWeek,
+    };
+  }
+
+  async getYearlyReportCount(
+    userId: string,
+    year: number,
+  ): Promise<{ daily: number; weekly: number; monthly: number; total: number }> {
+    const startOfYear = new Date(year, 0, 1);
+    const endOfYear = new Date(year, 11, 31, 23, 59, 59, 999);
+
+    const reports = await this.prisma.checkin.findMany({
+      where: {
+        userId,
+        type: 'report',
+        date: {
+          gte: startOfYear,
+          lte: endOfYear,
+        },
+      },
+    });
+
+    return {
+      total: reports.length,
+      daily: reports.filter((c) => (c.customFields as any)?.reportType === 'daily').length,
+      weekly: reports.filter((c) => (c.customFields as any)?.reportType === 'weekly').length,
+      monthly: reports.filter((c) => (c.customFields as any)?.reportType === 'monthly').length,
     };
   }
 }
