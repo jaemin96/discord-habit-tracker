@@ -118,4 +118,138 @@ export class AnalyticsService {
 
     return this.calcStats(userId, 'monthly', startDate, endDate);
   }
+
+  // ── 전체 오버뷰 (userId 없이 전체 집계) ──────────────────
+  async getOverviewStats() {
+    const now = new Date();
+
+    const todayStart = new Date(now);
+    todayStart.setHours(0, 0, 0, 0);
+    const todayEnd = new Date(now);
+    todayEnd.setHours(23, 59, 59, 999);
+
+    const weekStart = new Date(now);
+    weekStart.setDate(now.getDate() - ((now.getDay() + 6) % 7));
+    weekStart.setHours(0, 0, 0, 0);
+    const weekEnd = new Date(weekStart);
+    weekEnd.setDate(weekStart.getDate() + 6);
+    weekEnd.setHours(23, 59, 59, 999);
+
+    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+    const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
+
+    const [todayCount, weekCount, monthCount, totalCount, userList] = await Promise.all([
+      this.prisma.checkin.count({ where: { date: { gte: todayStart, lte: todayEnd } } }),
+      this.prisma.checkin.count({ where: { date: { gte: weekStart, lte: weekEnd } } }),
+      this.prisma.checkin.count({ where: { date: { gte: monthStart, lte: monthEnd } } }),
+      this.prisma.checkin.count(),
+      this.prisma.checkin.findMany({
+        distinct: ['userId'],
+        select: { userId: true },
+      }),
+    ]);
+
+    // 주간 일별 체크인 수 (최근 7일)
+    const last7Days = await this.prisma.checkin.findMany({
+      where: { date: { gte: weekStart, lte: weekEnd } },
+      select: { date: true, type: true },
+      orderBy: { date: 'asc' },
+    });
+
+    const dailyMap: Record<string, { total: number; camera_out: number; work_disconnect: number; workout: number; report: number }> = {};
+    for (let i = 0; i < 7; i++) {
+      const d = new Date(weekStart);
+      d.setDate(weekStart.getDate() + i);
+      const key = d.toISOString().split('T')[0];
+      dailyMap[key] = { total: 0, camera_out: 0, work_disconnect: 0, workout: 0, report: 0 };
+    }
+    for (const c of last7Days) {
+      const key = new Date(c.date).toISOString().split('T')[0];
+      if (dailyMap[key]) {
+        dailyMap[key].total++;
+        if (c.type in dailyMap[key]) {
+          (dailyMap[key] as any)[c.type]++;
+        }
+      }
+    }
+
+    // 월간 타입별 분포
+    const monthCheckins = await this.prisma.checkin.findMany({
+      where: { date: { gte: monthStart, lte: monthEnd } },
+      select: { type: true, customFields: true },
+    });
+
+    const typeBreakdown = {
+      camera_out: monthCheckins.filter((c) => c.type === 'camera_out').length,
+      work_disconnect: monthCheckins.filter((c) => c.type === 'work_disconnect').length,
+      workout: monthCheckins.filter((c) => c.type === 'workout').length,
+      report: monthCheckins.filter((c) => c.type === 'report').length,
+    };
+
+    return {
+      today: todayCount,
+      thisWeek: weekCount,
+      thisMonth: monthCount,
+      total: totalCount,
+      userCount: userList.length,
+      weeklyTrend: Object.entries(dailyMap).map(([date, counts]) => ({ date, ...counts })),
+      typeBreakdown,
+    };
+  }
+
+  // ── 체크인 목록 조회 ──────────────────────────────────────
+  async getCheckinList(userId: string | undefined, limit: number, offset: number) {
+    const where = userId ? { userId } : {};
+    const [checkins, total] = await Promise.all([
+      this.prisma.checkin.findMany({
+        where,
+        orderBy: { date: 'desc' },
+        take: limit,
+        skip: offset,
+      }),
+      this.prisma.checkin.count({ where }),
+    ]);
+    return { checkins, total, limit, offset };
+  }
+
+  // ── 사용자 목록 ──────────────────────────────────────────
+  async getUserList() {
+    const users = await this.prisma.checkin.groupBy({
+      by: ['userId'],
+      _count: { userId: true },
+      orderBy: { _count: { userId: 'desc' } },
+    });
+
+    const now = new Date();
+    const weekStart = new Date(now);
+    weekStart.setDate(now.getDate() - ((now.getDay() + 6) % 7));
+    weekStart.setHours(0, 0, 0, 0);
+
+    const weekCheckins = await this.prisma.checkin.findMany({
+      where: { date: { gte: weekStart } },
+      select: { userId: true },
+    });
+    const weekCountMap: Record<string, number> = {};
+    for (const c of weekCheckins) {
+      weekCountMap[c.userId] = (weekCountMap[c.userId] || 0) + 1;
+    }
+
+    const lastCheckins = await this.prisma.checkin.findMany({
+      where: { userId: { in: users.map((u) => u.userId) } },
+      orderBy: { date: 'desc' },
+      distinct: ['userId'],
+      select: { userId: true, date: true },
+    });
+    const lastCheckinMap: Record<string, Date> = {};
+    for (const c of lastCheckins) {
+      lastCheckinMap[c.userId] = c.date;
+    }
+
+    return users.map((u) => ({
+      userId: u.userId,
+      totalCheckins: u._count.userId,
+      weeklyCheckins: weekCountMap[u.userId] || 0,
+      lastCheckin: lastCheckinMap[u.userId] || null,
+    }));
+  }
 }
