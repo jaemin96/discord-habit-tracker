@@ -4,6 +4,7 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { DiscordModule } from './discord/discord.module';
 import { CheckinModule } from './checkin/checkin.module';
+import { AnalyticsModule } from './analytics/analytics.module';
 import configuration from './config/configuration';
 import { PrismaModule } from './database/prisma.module';
 
@@ -16,6 +17,7 @@ import { PrismaModule } from './database/prisma.module';
     }),
     PrismaModule,
     CheckinModule,
+    AnalyticsModule,
     DiscordModule,
   ],
   controllers: [AppController],

@@ -11,6 +11,8 @@ import { PingCommand } from './commands/ping.command';
 import { CheckinCommand } from '../checkin/commands/checkin.command';
 import { TodayCheckinCommand } from '../checkin/commands/today-checkin.command';
 import { WeeklyCheckinCommand } from '../checkin/commands/weekly-checkin.command';
+import { WeeklyReportCommand } from '../analytics/commands/weekly-report.command';
+import { MonthlyReportCommand } from '../analytics/commands/monthly-report.command';
 
 @Injectable()
 export class DiscordGateway implements OnModuleInit, OnModuleDestroy {
@@ -24,6 +26,8 @@ export class DiscordGateway implements OnModuleInit, OnModuleDestroy {
     private readonly checkinCommand: CheckinCommand,
     private readonly todayCheckinCommand: TodayCheckinCommand,
     private readonly weeklyCheckinCommand: WeeklyCheckinCommand,
+    private readonly weeklyReportCommand: WeeklyReportCommand,
+    private readonly monthlyReportCommand: MonthlyReportCommand,
   ) {}
 
   async onModuleInit() {
@@ -38,6 +42,8 @@ export class DiscordGateway implements OnModuleInit, OnModuleDestroy {
       this.checkinCommand,
       this.todayCheckinCommand,
       this.weeklyCheckinCommand,
+      this.weeklyReportCommand,
+      this.monthlyReportCommand,
     ];
 
     this.interactionEventHandler.register(client, commands);

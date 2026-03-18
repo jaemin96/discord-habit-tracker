@@ -6,9 +6,10 @@ import { ReadyEventHandler } from './events/ready.event';
 import { InteractionEventHandler } from './events/interaction.event';
 import { PingCommand } from './commands/ping.command';
 import { CheckinModule } from '../checkin/checkin.module';
+import { AnalyticsModule } from '../analytics/analytics.module';
 
 @Module({
-  imports: [CheckinModule],
+  imports: [CheckinModule, AnalyticsModule],
   providers: [
     DiscordService,
     {

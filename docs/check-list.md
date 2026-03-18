@@ -47,14 +47,15 @@
 
 ## Phase 4: 기본 통계 API
 
-- [ ] Analytics 모듈 생성
-- [ ] AnalyticsService 기본 구조
-- [ ] 주간 체크인 통계 계산 로직
-- [ ] StatisticsCache 저장/조회 로직
-- [ ] 캐시 만료 체크 로직
-- [ ] /주간리포트 명령어 구현
-- [ ] Discord Embed 형태로 통계 출력
-- [ ] REST API 엔드포인트 생성 (GET /api/analytics/weekly)
+- [x] Analytics 모듈 생성
+- [x] AnalyticsService 기본 구조
+- [x] 주간/월간 체크인 통계 계산 로직 (타입별 + 보고서 세분화)
+- [x] StatisticsCache 저장/조회 로직
+- [x] 캐시 만료 체크 로직 (30분 TTL)
+- [x] /주간리포트 명령어 구현
+- [x] /월간리포트 명령어 구현
+- [x] Discord Embed 형태로 통계 출력
+- [x] REST API 엔드포인트 생성 (GET /api/analytics/weekly, GET /api/analytics/monthly)
 
 ## Phase 5: 테스트 및 안정화
 
