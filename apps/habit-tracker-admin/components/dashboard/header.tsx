@@ -52,7 +52,8 @@ export function Header({ sidebarCollapsed, onMenuClick }: HeaderProps) {
     <header
       className={cn(
         "fixed top-0 right-0 z-30 flex h-16 items-center justify-between border-b border-border bg-background/80 backdrop-blur-sm px-4 lg:px-6 transition-all duration-300",
-        sidebarCollapsed ? "left-16" : "left-64"
+        "left-0",
+        sidebarCollapsed ? "lg:left-16" : "lg:left-64"
       )}
     >
       {/* Left Section */}

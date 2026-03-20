@@ -6,13 +6,14 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Loader2, ChevronLeft, ChevronRight, Search } from "lucide-react"
+import { Loader2, ChevronLeft, ChevronRight, Search, User } from "lucide-react"
+import Image from "next/image"
 import { api, Checkin } from "@/lib/api"
 import { format } from "date-fns"
 import { ko } from "date-fns/locale"
 
 const TYPE_META: Record<string, { label: string; emoji: string; variant: "default" | "secondary" | "outline" | "destructive" }> = {
-  camera_out: { label: "카메라끄기", emoji: "📷", variant: "default" },
+  camera_out: { label: "카메라외출", emoji: "📷", variant: "default" },
   work_disconnect: { label: "업무종료", emoji: "💼", variant: "secondary" },
   workout: { label: "운동", emoji: "💪", variant: "outline" },
   report: { label: "리포트", emoji: "📝", variant: "destructive" },
@@ -25,13 +26,13 @@ export default function CheckinsPage() {
   const [total, setTotal] = useState(0)
   const [loading, setLoading] = useState(true)
   const [page, setPage] = useState(0)
-  const [userId, setUserId] = useState("")
+  const [query, setQuery] = useState("")
   const [searchInput, setSearchInput] = useState("")
 
-  const load = useCallback(async (pg: number, uid: string) => {
+  const load = useCallback(async (pg: number, q: string) => {
     setLoading(true)
     try {
-      const res = await api.checkins({ userId: uid || undefined, limit: PAGE_SIZE, offset: pg * PAGE_SIZE })
+      const res = await api.checkins({ query: q || undefined, limit: PAGE_SIZE, offset: pg * PAGE_SIZE })
       setCheckins(res.checkins)
       setTotal(res.total)
     } catch (e) {
@@ -42,14 +43,14 @@ export default function CheckinsPage() {
   }, [])
 
   useEffect(() => {
-    load(page, userId)
-  }, [page, userId, load])
+    load(page, query)
+  }, [page, query, load])
 
   const totalPages = Math.ceil(total / PAGE_SIZE)
 
   const handleSearch = () => {
     setPage(0)
-    setUserId(searchInput.trim())
+    setQuery(searchInput.trim())
   }
 
   return (
@@ -65,7 +66,7 @@ export default function CheckinsPage() {
         {/* 검색 */}
         <div className="flex gap-2 max-w-sm">
           <Input
-            placeholder="사용자 ID로 검색..."
+            placeholder="사용자명으로 검색..."
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && handleSearch()}
@@ -73,8 +74,8 @@ export default function CheckinsPage() {
           <Button variant="outline" size="icon" onClick={handleSearch}>
             <Search className="h-4 w-4" />
           </Button>
-          {userId && (
-            <Button variant="ghost" size="sm" onClick={() => { setUserId(""); setSearchInput(""); setPage(0) }}>
+          {query && (
+            <Button variant="ghost" size="sm" onClick={() => { setQuery(""); setSearchInput(""); setPage(0) }}>
               초기화
             </Button>
           )}
@@ -84,7 +85,7 @@ export default function CheckinsPage() {
           <CardHeader>
             <CardTitle>체크인 목록</CardTitle>
             <CardDescription>
-              {userId ? `사용자 ${userId}의 체크인` : "전체 체크인"} · 총 {total}건
+              {query ? `"${query}" 검색 결과` : "전체 체크인"} · 총 {total}건
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -117,7 +118,31 @@ export default function CheckinsPage() {
                             <td className="py-3 px-4 text-muted-foreground whitespace-nowrap">
                               {format(new Date(c.date), "MM/dd HH:mm", { locale: ko })}
                             </td>
-                            <td className="py-3 px-4 font-medium">{c.userId}</td>
+                            <td className="py-3 px-4">
+                              <div className="flex items-center gap-2">
+                                <div className="h-7 w-7 rounded-full bg-primary/10 flex items-center justify-center shrink-0 overflow-hidden">
+                                  {c.user?.avatarUrl ? (
+                                    <Image
+                                      src={c.user.avatarUrl}
+                                      alt={c.user.displayName}
+                                      width={28}
+                                      height={28}
+                                      className="rounded-full object-cover"
+                                    />
+                                  ) : (
+                                    <User className="h-3.5 w-3.5 text-primary" />
+                                  )}
+                                </div>
+                                <div>
+                                  <p className="font-medium leading-none">
+                                    {c.user?.displayName ?? c.userId}
+                                  </p>
+                                  {c.user && (
+                                    <p className="text-xs text-muted-foreground mt-0.5">@{c.user.username}</p>
+                                  )}
+                                </div>
+                              </div>
+                            </td>
                             <td className="py-3 px-4">
                               <div className="flex items-center gap-2">
                                 <span>{meta.emoji}</span>

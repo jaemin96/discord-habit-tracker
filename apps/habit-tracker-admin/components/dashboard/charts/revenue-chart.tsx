@@ -93,6 +93,7 @@ export function RevenueChart() {
                   tickLine={false}
                   tick={{ fill: colors.text, fontSize: 12 }}
                   allowDecimals={false}
+                  width={28}
                 />
                 <Tooltip
                   contentStyle={{

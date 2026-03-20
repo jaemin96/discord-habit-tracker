@@ -3,13 +3,14 @@
 import { useEffect, useState } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Loader2 } from "lucide-react"
+import Image from "next/image"
+import { Loader2, User } from "lucide-react"
 import { api, Checkin } from "@/lib/api"
 import { format } from "date-fns"
 import { ko } from "date-fns/locale"
 
 const TYPE_LABEL: Record<string, { label: string; emoji: string; variant: "default" | "secondary" | "outline" | "destructive" }> = {
-  camera_out: { label: "카메라끄기", emoji: "📷", variant: "default" },
+  camera_out: { label: "카메라외출", emoji: "📷", variant: "default" },
   work_disconnect: { label: "업무종료", emoji: "💼", variant: "secondary" },
   workout: { label: "운동", emoji: "💪", variant: "outline" },
   report: { label: "리포트", emoji: "📝", variant: "destructive" },
@@ -47,18 +48,32 @@ export function RecentCheckins() {
               return (
                 <div key={c.id} className="flex items-center justify-between py-2 border-b border-border/50 last:border-0">
                   <div className="flex items-center gap-3 min-w-0">
-                    <span className="text-lg">{meta.emoji}</span>
+                    <div className="h-7 w-7 rounded-full bg-primary/10 flex items-center justify-center shrink-0 overflow-hidden">
+                      {c.user?.avatarUrl ? (
+                        <Image
+                          src={c.user.avatarUrl}
+                          alt={c.user.displayName}
+                          width={28}
+                          height={28}
+                          className="rounded-full object-cover"
+                        />
+                      ) : (
+                        <User className="h-3.5 w-3.5 text-primary" />
+                      )}
+                    </div>
                     <div className="min-w-0">
                       <div className="flex items-center gap-2">
+                        <span className="text-sm font-medium leading-none">
+                          {c.user?.displayName ?? c.userId}
+                        </span>
                         <Badge variant={meta.variant} className="text-xs">
-                          {meta.label}
+                          {meta.emoji} {meta.label}
                           {reportType && ` (${reportType})`}
                         </Badge>
                       </div>
-                      <p className="text-xs text-muted-foreground mt-0.5 truncate">
-                        {c.userId}
-                        {c.description && ` · ${c.description}`}
-                      </p>
+                      {c.description && (
+                        <p className="text-xs text-muted-foreground mt-0.5 truncate">{c.description}</p>
+                      )}
                     </div>
                   </div>
                   <span className="text-xs text-muted-foreground shrink-0 ml-2">

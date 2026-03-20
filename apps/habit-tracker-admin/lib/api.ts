@@ -44,6 +44,12 @@ export interface OverviewStats {
   };
 }
 
+export interface DiscordUser {
+  username: string;
+  displayName: string;
+  avatarUrl: string | null;
+}
+
 export interface Checkin {
   id: string;
   userId: string;
@@ -51,6 +57,7 @@ export interface Checkin {
   type: CheckinType;
   description: string | null;
   customFields: { reportType?: string } | null;
+  user: DiscordUser | null;
 }
 
 export interface CheckinListResponse {
@@ -62,6 +69,9 @@ export interface CheckinListResponse {
 
 export interface UserStat {
   userId: string;
+  username: string | null;
+  displayName: string | null;
+  avatarUrl: string | null;
   totalCheckins: number;
   weeklyCheckins: number;
   lastCheckin: string | null;
@@ -77,9 +87,9 @@ export const api = {
   overview: () => fetchApi<OverviewStats>('/api/analytics/overview'),
   weekly: (userId: string) => fetchApi<PeriodStats>(`/api/analytics/weekly?userId=${userId}`),
   monthly: (userId: string) => fetchApi<PeriodStats>(`/api/analytics/monthly?userId=${userId}`),
-  checkins: (params?: { userId?: string; limit?: number; offset?: number }) => {
+  checkins: (params?: { query?: string; limit?: number; offset?: number }) => {
     const q = new URLSearchParams();
-    if (params?.userId) q.set('userId', params.userId);
+    if (params?.query) q.set('query', params.query);
     if (params?.limit) q.set('limit', String(params.limit));
     if (params?.offset) q.set('offset', String(params.offset));
     return fetchApi<CheckinListResponse>(`/api/analytics/checkins?${q.toString()}`);

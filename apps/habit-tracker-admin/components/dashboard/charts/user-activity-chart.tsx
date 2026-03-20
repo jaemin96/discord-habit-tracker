@@ -55,7 +55,7 @@ export function UserActivityChart() {
 
   const chartData = data.map((d, i) => ({
     day: DAY_LABELS[i] ?? d.date.slice(5),
-    카메라끄기: d.camera_out,
+    카메라외출: d.camera_out,
     업무종료: d.work_disconnect,
     운동: d.workout,
     리포트: d.report,
@@ -88,6 +88,7 @@ export function UserActivityChart() {
                   tickLine={false}
                   tick={{ fill: colors.text, fontSize: 12 }}
                   allowDecimals={false}
+                  width={28}
                 />
                 <Tooltip
                   contentStyle={{
@@ -99,7 +100,7 @@ export function UserActivityChart() {
                   labelStyle={{ color: colors.text }}
                   cursor={{ fill: colors.cursor }}
                 />
-                <Bar dataKey="카메라끄기" fill={colors.primary} radius={[4, 4, 0, 0]} stackId="a" />
+                <Bar dataKey="카메라외출" fill={colors.primary} radius={[4, 4, 0, 0]} stackId="a" />
                 <Bar dataKey="업무종료" fill={colors.secondary} radius={[0, 0, 0, 0]} stackId="a" />
                 <Bar dataKey="운동" fill={colors.tertiary} radius={[0, 0, 0, 0]} stackId="a" />
                 <Bar dataKey="리포트" fill="#ec4899" radius={[4, 4, 0, 0]} stackId="a" />
@@ -110,7 +111,7 @@ export function UserActivityChart() {
         <div className="flex items-center justify-center flex-wrap gap-4 mt-4">
           <div className="flex items-center gap-2">
             <div className="h-3 w-3 rounded-full" style={{ backgroundColor: colors.primary }} />
-            <span className="text-sm text-muted-foreground">카메라끄기</span>
+            <span className="text-sm text-muted-foreground">카메라외출</span>
           </div>
           <div className="flex items-center gap-2">
             <div className="h-3 w-3 rounded-full" style={{ backgroundColor: colors.secondary }} />

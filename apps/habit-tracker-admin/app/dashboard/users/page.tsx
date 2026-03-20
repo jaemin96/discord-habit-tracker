@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import Image from "next/image"
 import { DashboardLayout } from "@/components/dashboard/dashboard-layout"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -46,7 +47,7 @@ export default function UsersPage() {
               </p>
             ) : (
               <div className="overflow-x-auto">
-                <table className="w-full text-sm">
+                <table className="w-full min-w-[600px] text-sm">
                   <thead>
                     <tr className="border-b border-border">
                       <th className="text-left py-3 px-4 text-muted-foreground font-medium">사용자</th>
@@ -63,12 +64,24 @@ export default function UsersPage() {
                         <tr key={u.userId} className="border-b border-border/50 hover:bg-muted/30 transition-colors">
                           <td className="py-3 px-4">
                             <div className="flex items-center gap-3">
-                              <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-                                <User className="h-4 w-4 text-primary" />
+                              <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0 overflow-hidden">
+                                {u.avatarUrl ? (
+                                  <Image
+                                    src={u.avatarUrl}
+                                    alt={u.displayName ?? u.userId}
+                                    width={32}
+                                    height={32}
+                                    className="rounded-full object-cover"
+                                  />
+                                ) : (
+                                  <User className="h-4 w-4 text-primary" />
+                                )}
                               </div>
                               <div>
-                                <p className="font-medium">{u.userId}</p>
-                                <p className="text-xs text-muted-foreground">#{i + 1}</p>
+                                <p className="font-medium">{u.displayName ?? u.userId}</p>
+                                <p className="text-xs text-muted-foreground">
+                                  {u.username ? `@${u.username}` : u.userId}
+                                </p>
                               </div>
                             </div>
                           </td>

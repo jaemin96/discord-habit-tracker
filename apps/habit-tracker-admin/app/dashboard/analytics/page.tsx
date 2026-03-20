@@ -27,7 +27,7 @@ export default function AnalyticsPage() {
 
   const typeMetrics = [
     {
-      title: "카메라끄기",
+      title: "카메라외출",
       value: breakdown?.camera_out ?? 0,
       icon: Camera,
       description: "카메라 끄기 체크인",
