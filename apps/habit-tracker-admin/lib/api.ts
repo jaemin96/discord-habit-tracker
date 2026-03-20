@@ -1,4 +1,4 @@
-const BASE_URL = 'http://localhost:4003';
+const BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4003';
 
 export type CheckinType = 'camera_out' | 'work_disconnect' | 'workout' | 'report';
 
