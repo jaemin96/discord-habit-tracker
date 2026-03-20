@@ -31,7 +31,6 @@ RUN npm install -g pnpm
 COPY --from=installer /app/apps/habit-tracker-server/package.json ./package.json
 COPY --from=installer /app/apps/habit-tracker-server/dist ./dist
 COPY --from=installer /app/apps/habit-tracker-server/node_modules ./node_modules
-COPY --from=installer /app/node_modules/.prisma ./node_modules/.prisma
 
 EXPOSE 4003
 
