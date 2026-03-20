@@ -30,7 +30,7 @@ const DARK_COLORS = {
 
 export function SalesBreakdownChart() {
   const [mounted, setMounted] = useState(false)
-  const [breakdown, setBreakdown] = useState({ camera_out: 0, work_disconnect: 0, workout: 0, report: 0 })
+  const [breakdown, setBreakdown] = useState<{ camera_out: number; work_disconnect: number; workout: number; report: { total: number } }>({ camera_out: 0, work_disconnect: 0, workout: 0, report: { total: 0 } })
   const [loading, setLoading] = useState(true)
   const { resolvedTheme } = useTheme()
 
@@ -48,7 +48,7 @@ export function SalesBreakdownChart() {
     { name: "카메라외출", value: breakdown.camera_out },
     { name: "업무종료", value: breakdown.work_disconnect },
     { name: "운동", value: breakdown.workout },
-    { name: "리포트", value: breakdown.report },
+    { name: "리포트", value: breakdown.report.total },
   ].filter((d) => d.value > 0)
 
   const total = data.reduce((s, d) => s + d.value, 0)
@@ -95,10 +95,12 @@ export function SalesBreakdownChart() {
                     border: `1px solid ${colors.grid}`,
                     borderRadius: "8px",
                     boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)",
+                    color: colors.text,
                   }}
+                  labelStyle={{ color: colors.text }}
                   formatter={(value: number, name: string) => [
-                    `${value}회 (${total > 0 ? Math.round((value / total) * 100) : 0}%)`,
-                    name
+                    <span style={{ color: colors.text }}>{value}회 ({total > 0 ? Math.round((value / total) * 100) : 0}%)</span>,
+                    <span style={{ color: colors.text }}>{name}</span>,
                   ]}
                 />
                 <Legend
