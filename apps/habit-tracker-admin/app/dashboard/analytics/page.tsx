@@ -6,8 +6,77 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { RevenueChart } from "@/components/dashboard/charts/revenue-chart"
 import { UserActivityChart } from "@/components/dashboard/charts/user-activity-chart"
 import { SalesBreakdownChart } from "@/components/dashboard/charts/sales-breakdown-chart"
+import { ReportBreakdownChart } from "@/components/dashboard/charts/report-breakdown-chart"
 import { Camera, Briefcase, Dumbbell, FileText, Loader2 } from "lucide-react"
-import { api, OverviewStats } from "@/lib/api"
+import { api, OverviewStats, TypeBreakdown } from "@/lib/api"
+
+function TypeCard({
+  title,
+  icon: Icon,
+  loading,
+  daily,
+  weekly,
+  monthly,
+  isReport,
+  reportBreakdown,
+}: {
+  title: string
+  icon: React.ElementType
+  loading: boolean
+  daily: number
+  weekly: number
+  monthly: number
+  isReport?: boolean
+  reportBreakdown?: { daily: { d: number; w: number; m: number }; weekly: { d: number; w: number; m: number }; monthly: { d: number; w: number; m: number } }
+}) {
+  return (
+    <Card>
+      <CardHeader className="flex flex-row items-center justify-between pb-2">
+        <CardTitle className="text-sm font-medium text-muted-foreground">{title}</CardTitle>
+        <Icon className="h-4 w-4 text-muted-foreground" />
+      </CardHeader>
+      <CardContent>
+        {loading ? (
+          <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+        ) : (
+          <div className="space-y-3">
+            <div className={`grid ${isReport ? "grid-cols-4" : "grid-cols-3"} gap-2 text-center`}>
+              {isReport && <div />}
+              <div>
+                <p className="text-xs text-muted-foreground mb-0.5">오늘</p>
+                <p className="text-xl font-bold">{daily}</p>
+              </div>
+              <div className="border-x border-border">
+                <p className="text-xs text-muted-foreground mb-0.5">이번 주</p>
+                <p className="text-xl font-bold">{weekly}</p>
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground mb-0.5">이번 달</p>
+                <p className="text-xl font-bold">{monthly}</p>
+              </div>
+            </div>
+            {isReport && reportBreakdown && (
+              <div className="border-t border-border pt-2 space-y-1.5">
+                {[
+                  { label: "📝 일일", vals: reportBreakdown.daily },
+                  { label: "📊 주간", vals: reportBreakdown.weekly },
+                  { label: "📅 월간", vals: reportBreakdown.monthly },
+                ].map(({ label, vals }) => (
+                  <div key={label} className="grid grid-cols-4 items-center gap-1 text-xs">
+                    <span className="text-muted-foreground font-medium">{label}</span>
+                    <span className="text-center text-foreground font-medium">{vals.d}회</span>
+                    <span className="text-center text-foreground font-medium">{vals.w}회</span>
+                    <span className="text-center text-foreground font-medium">{vals.m}회</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  )
+}
 
 export default function AnalyticsPage() {
   const [stats, setStats] = useState<OverviewStats | null>(null)
@@ -20,36 +89,19 @@ export default function AnalyticsPage() {
       .finally(() => setLoading(false))
   }, [])
 
-  const breakdown = stats?.typeBreakdown
-  const total = breakdown
-    ? breakdown.camera_out + breakdown.work_disconnect + breakdown.workout + breakdown.report
+  const d = stats?.dailyBreakdown
+  const w = stats?.weeklyBreakdown
+  const m = stats?.typeBreakdown // typeBreakdown = 이번 달
+
+  // 이번 달 기준 비율 계산용
+  const monthTotal = m
+    ? m.camera_out + m.work_disconnect + m.workout + m.report.total
     : 0
 
   const typeMetrics = [
-    {
-      title: "카메라외출",
-      value: breakdown?.camera_out ?? 0,
-      icon: Camera,
-      description: "카메라 끄기 체크인",
-    },
-    {
-      title: "업무종료",
-      value: breakdown?.work_disconnect ?? 0,
-      icon: Briefcase,
-      description: "업무 종료 체크인",
-    },
-    {
-      title: "운동",
-      value: breakdown?.workout ?? 0,
-      icon: Dumbbell,
-      description: "운동 체크인",
-    },
-    {
-      title: "리포트",
-      value: breakdown?.report ?? 0,
-      icon: FileText,
-      description: "일간/주간/월간 리포트",
-    },
+    { title: "카메라외출", icon: Camera, daily: d?.camera_out ?? 0, weekly: w?.camera_out ?? 0, monthly: m?.camera_out ?? 0 },
+    { title: "업무종료", icon: Briefcase, daily: d?.work_disconnect ?? 0, weekly: w?.work_disconnect ?? 0, monthly: m?.work_disconnect ?? 0 },
+    { title: "운동", icon: Dumbbell, daily: d?.workout ?? 0, weekly: w?.workout ?? 0, monthly: m?.workout ?? 0 },
   ]
 
   return (
@@ -60,34 +112,42 @@ export default function AnalyticsPage() {
           <p className="text-muted-foreground">체크인 통계와 트렌드를 분석합니다.</p>
         </div>
 
-        {/* 이번 달 타입별 통계 */}
+        {/* 타입별 통계 카드 */}
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-6">
           {typeMetrics.map((metric) => (
-            <Card key={metric.title}>
-              <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="text-sm font-medium text-muted-foreground">
-                  {metric.title}
-                </CardTitle>
-                <metric.icon className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                {loading ? (
-                  <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
-                ) : (
-                  <>
-                    <div className="text-2xl font-bold">{metric.value}회</div>
-                    <p className="text-xs text-muted-foreground mt-2">{metric.description}</p>
-                  </>
-                )}
-              </CardContent>
-            </Card>
+            <TypeCard
+              key={metric.title}
+              title={metric.title}
+              icon={metric.icon}
+              loading={loading}
+              daily={metric.daily}
+              weekly={metric.weekly}
+              monthly={metric.monthly}
+            />
           ))}
+
+          {/* 리포트 카드 - 일일/주간/월간 세부 분류 포함 */}
+          <TypeCard
+            title="리포트"
+            icon={FileText}
+            loading={loading}
+            daily={d?.report.total ?? 0}
+            weekly={w?.report.total ?? 0}
+            monthly={m?.report.total ?? 0}
+            isReport
+            reportBreakdown={{
+              daily: { d: d?.report.daily ?? 0, w: w?.report.daily ?? 0, m: m?.report.daily ?? 0 },
+              weekly: { d: d?.report.weekly ?? 0, w: w?.report.weekly ?? 0, m: m?.report.weekly ?? 0 },
+              monthly: { d: d?.report.monthly ?? 0, w: w?.report.monthly ?? 0, m: m?.report.monthly ?? 0 },
+            }}
+          />
         </div>
 
         {/* Charts */}
         <div className="grid gap-6 lg:grid-cols-2 mb-6">
           <RevenueChart />
           <UserActivityChart />
+          <ReportBreakdownChart />
         </div>
 
         <div className="grid gap-6 lg:grid-cols-3">
@@ -104,9 +164,13 @@ export default function AnalyticsPage() {
                 </div>
               ) : (
                 <div className="space-y-4">
-                  {typeMetrics.map((item, i) => {
-                    const pct = total > 0 ? Math.round((item.value / total) * 100) : 0
-                    const colors = ["bg-green-500", "bg-violet-500", "bg-amber-500", "bg-pink-500"]
+                  {[
+                    { title: "카메라외출", value: m?.camera_out ?? 0, color: "bg-green-500" },
+                    { title: "업무종료", value: m?.work_disconnect ?? 0, color: "bg-violet-500" },
+                    { title: "운동", value: m?.workout ?? 0, color: "bg-amber-500" },
+                    { title: "리포트", value: m?.report.total ?? 0, color: "bg-pink-500" },
+                  ].map((item) => {
+                    const pct = monthTotal > 0 ? Math.round((item.value / monthTotal) * 100) : 0
                     return (
                       <div key={item.title} className="flex items-center gap-4">
                         <div className="flex-1 min-w-0">
@@ -116,7 +180,7 @@ export default function AnalyticsPage() {
                           </div>
                           <div className="h-2 bg-muted rounded-full overflow-hidden">
                             <div
-                              className={`h-full ${colors[i]} rounded-full transition-all`}
+                              className={`h-full ${item.color} rounded-full transition-all`}
                               style={{ width: `${pct}%` }}
                             />
                           </div>

@@ -29,6 +29,13 @@ export interface DayTrend {
   report: number;
 }
 
+export interface TypeBreakdown {
+  camera_out: number;
+  work_disconnect: number;
+  workout: number;
+  report: ReportStats;
+}
+
 export interface OverviewStats {
   today: number;
   thisWeek: number;
@@ -36,12 +43,9 @@ export interface OverviewStats {
   total: number;
   userCount: number;
   weeklyTrend: DayTrend[];
-  typeBreakdown: {
-    camera_out: number;
-    work_disconnect: number;
-    workout: number;
-    report: number;
-  };
+  typeBreakdown: TypeBreakdown;
+  dailyBreakdown: TypeBreakdown;
+  weeklyBreakdown: TypeBreakdown;
 }
 
 export interface DiscordUser {
@@ -83,6 +87,13 @@ async function fetchApi<T>(path: string): Promise<T> {
   return res.json();
 }
 
+export interface ReportMonthTrend {
+  month: string;
+  일일: number;
+  주간: number;
+  월간: number;
+}
+
 export const api = {
   overview: () => fetchApi<OverviewStats>('/api/analytics/overview'),
   weekly: (userId: string) => fetchApi<PeriodStats>(`/api/analytics/weekly?userId=${userId}`),
@@ -95,4 +106,5 @@ export const api = {
     return fetchApi<CheckinListResponse>(`/api/analytics/checkins?${q.toString()}`);
   },
   users: () => fetchApi<UserStat[]>('/api/analytics/users'),
+  reportMonthlyTrend: () => fetchApi<ReportMonthTrend[]>('/api/analytics/report-monthly-trend'),
 };

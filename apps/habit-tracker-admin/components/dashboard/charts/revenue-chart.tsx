@@ -16,16 +16,22 @@ import { api, DayTrend } from "@/lib/api"
 import { Loader2 } from "lucide-react"
 
 const LIGHT_COLORS = {
-  primary: "#22c55e",
-  secondary: "#3b82f6",
+  total: "#22c55e",
+  camera_out: "#8b5cf6",
+  work_disconnect: "#3b82f6",
+  workout: "#f59e0b",
+  report: "#ec4899",
   grid: "#e2e8f0",
   text: "#64748b",
   tooltipBg: "#ffffff",
 }
 
 const DARK_COLORS = {
-  primary: "#4ade80",
-  secondary: "#60a5fa",
+  total: "#4ade80",
+  camera_out: "#a78bfa",
+  work_disconnect: "#60a5fa",
+  workout: "#fbbf24",
+  report: "#f472b6",
   grid: "#334155",
   text: "#94a3b8",
   tooltipBg: "#1e293b",
@@ -51,9 +57,11 @@ export function RevenueChart() {
 
   const chartData = data.map((d, i) => ({
     day: DAY_LABELS[i] ?? d.date.slice(5),
-    total: d.total,
-    workout: d.workout,
-    camera_out: d.camera_out,
+    전체: d.total,
+    카메라외출: d.camera_out,
+    업무종료: d.work_disconnect,
+    운동: d.workout,
+    리포트: d.report,
   }))
 
   return (
@@ -72,14 +80,15 @@ export function RevenueChart() {
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                 <defs>
-                  <linearGradient id="colorTotal" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor={colors.primary} stopOpacity={0.3} />
-                    <stop offset="95%" stopColor={colors.primary} stopOpacity={0} />
-                  </linearGradient>
-                  <linearGradient id="colorWorkout" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor={colors.secondary} stopOpacity={0.3} />
-                    <stop offset="95%" stopColor={colors.secondary} stopOpacity={0} />
-                  </linearGradient>
+                  {(["전체", "카메라외출", "업무종료", "운동", "리포트"] as const).map((key) => {
+                    const colorKey = key === "전체" ? "total" : key === "카메라외출" ? "camera_out" : key === "업무종료" ? "work_disconnect" : key === "운동" ? "workout" : "report"
+                    return (
+                      <linearGradient key={key} id={`color_${colorKey}`} x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor={(colors as any)[colorKey]} stopOpacity={0.3} />
+                        <stop offset="95%" stopColor={(colors as any)[colorKey]} stopOpacity={0} />
+                      </linearGradient>
+                    )
+                  })}
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke={colors.grid} vertical={false} />
                 <XAxis
@@ -104,37 +113,28 @@ export function RevenueChart() {
                   }}
                   labelStyle={{ color: colors.text }}
                 />
-                <Area
-                  type="monotone"
-                  dataKey="total"
-                  stroke={colors.primary}
-                  strokeWidth={2}
-                  fillOpacity={1}
-                  fill="url(#colorTotal)"
-                  name="전체 체크인"
-                />
-                <Area
-                  type="monotone"
-                  dataKey="workout"
-                  stroke={colors.secondary}
-                  strokeWidth={2}
-                  fillOpacity={1}
-                  fill="url(#colorWorkout)"
-                  name="운동"
-                />
+                <Area type="monotone" dataKey="전체" stroke={colors.total} strokeWidth={2} fillOpacity={1} fill="url(#color_total)" />
+                <Area type="monotone" dataKey="카메라외출" stroke={colors.camera_out} strokeWidth={2} fillOpacity={1} fill="url(#color_camera_out)" />
+                <Area type="monotone" dataKey="업무종료" stroke={colors.work_disconnect} strokeWidth={2} fillOpacity={1} fill="url(#color_work_disconnect)" />
+                <Area type="monotone" dataKey="운동" stroke={colors.workout} strokeWidth={2} fillOpacity={1} fill="url(#color_workout)" />
+                <Area type="monotone" dataKey="리포트" stroke={colors.report} strokeWidth={2} fillOpacity={1} fill="url(#color_report)" />
               </AreaChart>
             </ResponsiveContainer>
           </div>
         )}
-        <div className="flex items-center justify-center gap-6 mt-4">
-          <div className="flex items-center gap-2">
-            <div className="h-3 w-3 rounded-full" style={{ backgroundColor: colors.primary }} />
-            <span className="text-sm text-muted-foreground">전체 체크인</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="h-3 w-3 rounded-full" style={{ backgroundColor: colors.secondary }} />
-            <span className="text-sm text-muted-foreground">운동</span>
-          </div>
+        <div className="flex items-center justify-center flex-wrap gap-4 mt-4">
+          {[
+            { label: "전체", colorKey: "total" },
+            { label: "카메라외출", colorKey: "camera_out" },
+            { label: "업무종료", colorKey: "work_disconnect" },
+            { label: "운동", colorKey: "workout" },
+            { label: "리포트", colorKey: "report" },
+          ].map(({ label, colorKey }) => (
+            <div key={label} className="flex items-center gap-2">
+              <div className="h-3 w-3 rounded-full" style={{ backgroundColor: (colors as any)[colorKey] }} />
+              <span className="text-sm text-muted-foreground">{label}</span>
+            </div>
+          ))}
         </div>
       </CardContent>
     </Card>
