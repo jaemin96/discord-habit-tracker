@@ -149,13 +149,24 @@ export class AnalyticsService {
       }),
     ]);
 
-    // 주간 일별 체크인 수 (최근 7일)
-    const last7Days = await this.prisma.checkin.findMany({
-      where: { date: { gte: weekStart, lte: weekEnd } },
-      select: { date: true, type: true },
-      orderBy: { date: 'asc' },
-    });
+    // 오늘 / 이번 주 / 이번 달 타입별 분포 (주간은 일별 트렌드에도 재사용)
+    const [todayCheckins, weekCheckins, monthCheckins] = await Promise.all([
+      this.prisma.checkin.findMany({
+        where: { date: { gte: todayStart, lte: todayEnd } },
+        select: { type: true, customFields: true },
+      }),
+      this.prisma.checkin.findMany({
+        where: { date: { gte: weekStart, lte: weekEnd } },
+        select: { date: true, type: true, customFields: true },
+        orderBy: { date: 'asc' },
+      }),
+      this.prisma.checkin.findMany({
+        where: { date: { gte: monthStart, lte: monthEnd } },
+        select: { type: true, customFields: true },
+      }),
+    ]);
 
+    // 주간 일별 집계
     const dailyMap: Record<string, { total: number; camera_out: number; work_disconnect: number; workout: number; report: number }> = {};
     for (let i = 0; i < 7; i++) {
       const d = new Date(weekStart);
@@ -163,7 +174,7 @@ export class AnalyticsService {
       const key = d.toISOString().split('T')[0];
       dailyMap[key] = { total: 0, camera_out: 0, work_disconnect: 0, workout: 0, report: 0 };
     }
-    for (const c of last7Days) {
+    for (const c of weekCheckins) {
       const key = new Date(c.date).toISOString().split('T')[0];
       if (dailyMap[key]) {
         dailyMap[key].total++;
@@ -173,17 +184,19 @@ export class AnalyticsService {
       }
     }
 
-    // 월간 타입별 분포
-    const monthCheckins = await this.prisma.checkin.findMany({
-      where: { date: { gte: monthStart, lte: monthEnd } },
-      select: { type: true, customFields: true },
-    });
-
-    const typeBreakdown = {
-      camera_out: monthCheckins.filter((c) => c.type === 'camera_out').length,
-      work_disconnect: monthCheckins.filter((c) => c.type === 'work_disconnect').length,
-      workout: monthCheckins.filter((c) => c.type === 'workout').length,
-      report: monthCheckins.filter((c) => c.type === 'report').length,
+    const buildBreakdown = (checkins: { type: string; customFields: any }[]) => {
+      const reports = checkins.filter((c) => c.type === 'report');
+      return {
+        camera_out: checkins.filter((c) => c.type === 'camera_out').length,
+        work_disconnect: checkins.filter((c) => c.type === 'work_disconnect').length,
+        workout: checkins.filter((c) => c.type === 'workout').length,
+        report: {
+          total: reports.length,
+          daily: reports.filter((c) => (c.customFields as any)?.reportType === 'daily').length,
+          weekly: reports.filter((c) => (c.customFields as any)?.reportType === 'weekly').length,
+          monthly: reports.filter((c) => (c.customFields as any)?.reportType === 'monthly').length,
+        },
+      };
     };
 
     return {
@@ -193,8 +206,44 @@ export class AnalyticsService {
       total: totalCount,
       userCount: userList.length,
       weeklyTrend: Object.entries(dailyMap).map(([date, counts]) => ({ date, ...counts })),
-      typeBreakdown,
+      typeBreakdown: buildBreakdown(monthCheckins),
+      dailyBreakdown: buildBreakdown(todayCheckins),
+      weeklyBreakdown: buildBreakdown(weekCheckins),
     };
+  }
+
+  // ── 리포트 월별 추이 (최근 12개월) ──────────────────────────
+  async getReportMonthlyTrend() {
+    const now = new Date();
+    const months: { label: string; start: Date; end: Date }[] = [];
+
+    for (let i = 11; i >= 0; i--) {
+      const start = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      const end = new Date(now.getFullYear(), now.getMonth() - i + 1, 0, 23, 59, 59, 999);
+      const label = `${start.getFullYear().toString().slice(2)}/${String(start.getMonth() + 1).padStart(2, '0')}`;
+      months.push({ label, start, end });
+    }
+
+    const startDate = months[0].start;
+    const endDate = months[months.length - 1].end;
+
+    const reports = await this.prisma.checkin.findMany({
+      where: {
+        type: 'report',
+        date: { gte: startDate, lte: endDate },
+      },
+      select: { date: true, customFields: true },
+    });
+
+    return months.map(({ label, start, end }) => {
+      const inMonth = reports.filter((r) => r.date >= start && r.date <= end);
+      return {
+        month: label,
+        일일: inMonth.filter((r) => (r.customFields as any)?.reportType === 'daily').length,
+        주간: inMonth.filter((r) => (r.customFields as any)?.reportType === 'weekly').length,
+        월간: inMonth.filter((r) => (r.customFields as any)?.reportType === 'monthly').length,
+      };
+    });
   }
 
   // ── 체크인 목록 조회 ──────────────────────────────────────

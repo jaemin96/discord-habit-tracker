@@ -33,4 +33,9 @@ export class AnalyticsController {
   async users() {
     return this.analyticsService.getUserList();
   }
+
+  @Get('report-monthly-trend')
+  async reportMonthlyTrend() {
+    return this.analyticsService.getReportMonthlyTrend();
+  }
 }
