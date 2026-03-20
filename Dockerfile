@@ -19,7 +19,7 @@ RUN pnpm install --frozen-lockfile
 
 # 소스 복사 후 prisma generate → 빌드
 COPY --from=pruner /app/out/full/ .
-RUN pnpm --filter @habit-tracker/server prisma:generate
+RUN DATABASE_URL="postgresql://x:x@localhost/x" DIRECT_URL="postgresql://x:x@localhost/x" pnpm --filter @habit-tracker/server exec prisma generate
 RUN pnpm turbo run build --filter=@habit-tracker/server
 
 # ── Stage 3: runner ──────────────────────────────────────────────────────────
