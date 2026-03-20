@@ -17,8 +17,9 @@ COPY --from=pruner /app/out/json/ .
 COPY --from=pruner /app/out/pnpm-lock.yaml ./pnpm-lock.yaml
 RUN pnpm install --frozen-lockfile
 
-# 소스 복사 후 빌드
+# 소스 복사 후 prisma generate → 빌드
 COPY --from=pruner /app/out/full/ .
+RUN pnpm --filter @habit-tracker/server prisma:generate
 RUN pnpm turbo run build --filter=@habit-tracker/server
 
 # ── Stage 3: runner ──────────────────────────────────────────────────────────
