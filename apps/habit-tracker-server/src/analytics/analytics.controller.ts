@@ -22,11 +22,11 @@ export class AnalyticsController {
 
   @Get('checkins')
   async checkins(
-    @Query('userId') userId: string,
+    @Query('query') query: string,
     @Query('limit') limit: string,
     @Query('offset') offset: string,
   ) {
-    return this.analyticsService.getCheckinList(userId, Number(limit) || 50, Number(offset) || 0);
+    return this.analyticsService.getCheckinList(query || undefined, Number(limit) || 50, Number(offset) || 0);
   }
 
   @Get('users')

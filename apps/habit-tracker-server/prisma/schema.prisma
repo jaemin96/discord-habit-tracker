@@ -62,3 +62,11 @@ model StatisticsCache {
 
   @@unique([userId, period, startDate])
 }
+
+model DiscordUser {
+  id          String   @id  // Discord snowflake ID
+  username    String
+  displayName String
+  avatarUrl   String?
+  updatedAt   DateTime @updatedAt
+}

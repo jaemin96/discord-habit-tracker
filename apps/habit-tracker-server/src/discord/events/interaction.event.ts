@@ -1,11 +1,14 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Client, Events } from 'discord.js';
 import { ICommand } from '../commands/command.interface';
+import { UserService } from '../../user/user.service';
 
 @Injectable()
 export class InteractionEventHandler {
   private readonly logger = new Logger(InteractionEventHandler.name);
   private commandMap = new Map<string, ICommand>();
+
+  constructor(private readonly userService: UserService) {}
 
   register(client: Client, commands: ICommand[]): void {
     // Command Map 초기화
@@ -31,6 +34,15 @@ export class InteractionEventHandler {
         this.logger.log(
           `⚡ Executing command: /${interaction.commandName} by ${interaction.user.tag}`,
         );
+
+        // Discord 사용자 정보 upsert (최신 이름/아바타 유지)
+        await this.userService.upsert({
+          id: interaction.user.id,
+          username: interaction.user.username,
+          displayName: interaction.user.displayName,
+          avatarUrl: interaction.user.avatarURL() ?? null,
+        });
+
         await command.execute(interaction);
       } catch (error) {
         this.logger.error(

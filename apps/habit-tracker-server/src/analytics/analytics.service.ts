@@ -198,8 +198,28 @@ export class AnalyticsService {
   }
 
   // ── 체크인 목록 조회 ──────────────────────────────────────
-  async getCheckinList(userId: string | undefined, limit: number, offset: number) {
-    const where = userId ? { userId } : {};
+  // query: username 또는 displayName으로 부분검색 → 해당 userId로 필터링
+  async getCheckinList(query: string | undefined, limit: number, offset: number) {
+    let filterUserIds: string[] | undefined;
+
+    if (query) {
+      const matched = await this.prisma.discordUser.findMany({
+        where: {
+          OR: [
+            { username: { contains: query, mode: 'insensitive' } },
+            { displayName: { contains: query, mode: 'insensitive' } },
+          ],
+        },
+        select: { id: true },
+      });
+      filterUserIds = matched.map((u) => u.id);
+      // 매칭 유저 없으면 빈 결과 반환
+      if (filterUserIds.length === 0) {
+        return { checkins: [], total: 0, limit, offset };
+      }
+    }
+
+    const where = filterUserIds ? { userId: { in: filterUserIds } } : {};
     const [checkins, total] = await Promise.all([
       this.prisma.checkin.findMany({
         where,
@@ -209,7 +229,23 @@ export class AnalyticsService {
       }),
       this.prisma.checkin.count({ where }),
     ]);
-    return { checkins, total, limit, offset };
+
+    const userIds = [...new Set(checkins.map((c) => c.userId))];
+    const discordUsers = await this.prisma.discordUser.findMany({
+      where: { id: { in: userIds } },
+      select: { id: true, username: true, displayName: true, avatarUrl: true },
+    });
+    const userMap: Record<string, { username: string; displayName: string; avatarUrl: string | null }> = {};
+    for (const u of discordUsers) {
+      userMap[u.id] = { username: u.username, displayName: u.displayName, avatarUrl: u.avatarUrl };
+    }
+
+    const enriched = checkins.map((c) => ({
+      ...c,
+      user: userMap[c.userId] ?? null,
+    }));
+
+    return { checkins: enriched, total, limit, offset };
   }
 
   // ── 사용자 목록 ──────────────────────────────────────────
@@ -225,28 +261,45 @@ export class AnalyticsService {
     weekStart.setDate(now.getDate() - ((now.getDay() + 6) % 7));
     weekStart.setHours(0, 0, 0, 0);
 
-    const weekCheckins = await this.prisma.checkin.findMany({
-      where: { date: { gte: weekStart } },
-      select: { userId: true },
-    });
+    const userIds = users.map((u) => u.userId);
+
+    const [weekCheckins, lastCheckins, discordUsers] = await Promise.all([
+      this.prisma.checkin.findMany({
+        where: { date: { gte: weekStart } },
+        select: { userId: true },
+      }),
+      this.prisma.checkin.findMany({
+        where: { userId: { in: userIds } },
+        orderBy: { date: 'desc' },
+        distinct: ['userId'],
+        select: { userId: true, date: true },
+      }),
+      this.prisma.discordUser.findMany({
+        where: { id: { in: userIds } },
+        select: { id: true, username: true, displayName: true, avatarUrl: true },
+      }),
+    ]);
+
     const weekCountMap: Record<string, number> = {};
     for (const c of weekCheckins) {
       weekCountMap[c.userId] = (weekCountMap[c.userId] || 0) + 1;
     }
 
-    const lastCheckins = await this.prisma.checkin.findMany({
-      where: { userId: { in: users.map((u) => u.userId) } },
-      orderBy: { date: 'desc' },
-      distinct: ['userId'],
-      select: { userId: true, date: true },
-    });
     const lastCheckinMap: Record<string, Date> = {};
     for (const c of lastCheckins) {
       lastCheckinMap[c.userId] = c.date;
     }
 
+    const discordUserMap: Record<string, { username: string; displayName: string; avatarUrl: string | null }> = {};
+    for (const u of discordUsers) {
+      discordUserMap[u.id] = { username: u.username, displayName: u.displayName, avatarUrl: u.avatarUrl };
+    }
+
     return users.map((u) => ({
       userId: u.userId,
+      username: discordUserMap[u.userId]?.username ?? null,
+      displayName: discordUserMap[u.userId]?.displayName ?? null,
+      avatarUrl: discordUserMap[u.userId]?.avatarUrl ?? null,
       totalCheckins: u._count.userId,
       weeklyCheckins: weekCountMap[u.userId] || 0,
       lastCheckin: lastCheckinMap[u.userId] || null,
