@@ -26,11 +26,9 @@ RUN pnpm turbo run build --filter=@habit-tracker/server
 FROM node:24-alpine AS runner
 WORKDIR /app
 
-RUN npm install -g pnpm
+COPY --from=installer /app .
 
-COPY --from=installer /app/apps/habit-tracker-server/package.json ./package.json
-COPY --from=installer /app/apps/habit-tracker-server/dist ./dist
-COPY --from=installer /app/apps/habit-tracker-server/node_modules ./node_modules
+WORKDIR /app/apps/habit-tracker-server
 
 EXPOSE 4003
 
