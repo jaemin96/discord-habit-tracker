@@ -69,7 +69,7 @@ export class WeeklyCheckinCommand implements ICommand {
 
     const typeStats = [
       stats.camera_out > 0 ? `📸 카메라외출 · ${stats.camera_out}회` : null,
-      stats.work_disconnect > 0 ? `💼 업무단절 · ${stats.work_disconnect}회` : null,
+      stats.work_disconnect > 0 ? `📚 업무 외 학습 · ${stats.work_disconnect}회` : null,
       stats.workout > 0 ? `🏋️ 운동 · ${stats.workout}회` : null,
       stats.report.total > 0
         ? [

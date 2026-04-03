@@ -12,7 +12,7 @@ function buildStatsEmbed(stats: PeriodStats, title: string): EmbedBuilder {
 
   const lines: string[] = [];
   if (stats.camera_out > 0)      lines.push(`📸 카메라외출 · ${stats.camera_out}회`);
-  if (stats.work_disconnect > 0) lines.push(`💼 업무단절 · ${stats.work_disconnect}회`);
+  if (stats.work_disconnect > 0) lines.push(`📚 업무 외 학습 · ${stats.work_disconnect}회`);
   if (stats.workout > 0)         lines.push(`🏋️ 운동 · ${stats.workout}회`);
   if (stats.report.total > 0) {
     lines.push(`📋 보고서 · ${stats.report.total}회`);

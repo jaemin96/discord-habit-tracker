@@ -38,7 +38,7 @@ export class TodayCheckinCommand implements ICommand {
     } else {
       const TYPE_META: Record<string, { emoji: string; label: string }> = {
         camera_out: { emoji: '📸', label: '카메라외출' },
-        work_disconnect: { emoji: '💼', label: '업무단절' },
+        work_disconnect: { emoji: '📚', label: '업무 외 학습' },
         workout: { emoji: '🏋️', label: '운동' },
         report: { emoji: '📋', label: '보고서 작성' },
       };

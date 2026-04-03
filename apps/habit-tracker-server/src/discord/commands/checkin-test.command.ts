@@ -22,7 +22,7 @@ export class CheckinTestCommand implements ICommand {
           .setRequired(true)
           .addChoices(
             { name: '📸 카메라외출', value: 'camera_out' },
-            { name: '💼 업무단절', value: 'work_disconnect' },
+            { name: '📚 업무 외 학습', value: 'work_disconnect' },
           ),
       )
       .addStringOption((option) =>
@@ -40,7 +40,7 @@ export class CheckinTestCommand implements ICommand {
 
     const typeEmoji = type === 'camera_out' ? '📸' : '💼';
     const typeName =
-      type === 'camera_out' ? '카메라외출' : '업무단절';
+      type === 'camera_out' ? '카메라외출' : '업무 외 학습';
 
     const embed = new EmbedBuilder()
       .setColor(0x00ff00)

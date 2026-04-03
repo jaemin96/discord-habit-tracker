@@ -9,7 +9,7 @@ import { CheckinService, CheckinType, ReportType } from '../checkin.service';
 
 const TYPE_META: Record<CheckinType, { emoji: string; label: string }> = {
   camera_out: { emoji: '📸', label: '카메라외출' },
-  work_disconnect: { emoji: '💼', label: '업무단절' },
+  work_disconnect: { emoji: '📚', label: '업무 외 학습' },
   workout: { emoji: '🏋️', label: '운동' },
   report: { emoji: '📋', label: '보고서 작성' },
 };
@@ -38,7 +38,7 @@ export class CheckinCommand implements ICommand {
           .setRequired(true)
           .addChoices(
             { name: '📸 카메라외출', value: 'camera_out' },
-            { name: '💼 업무단절', value: 'work_disconnect' },
+            { name: '📚 업무 외 학습', value: 'work_disconnect' },
             { name: '🏋️ 운동', value: 'workout' },
             { name: '📋 보고서 작성', value: 'report' },
           ),
