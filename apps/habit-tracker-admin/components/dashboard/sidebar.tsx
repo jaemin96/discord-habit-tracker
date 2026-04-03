@@ -22,7 +22,7 @@ const navigation = [
   { name: "체크인 현황", href: "/dashboard/checkins", icon: ClipboardList },
   { name: "사용자 통계", href: "/dashboard/users", icon: Users },
   { name: "분석", href: "/dashboard/analytics", icon: BarChart3 },
-  { name: "설정", href: "/dashboard/settings", icon: Settings },
+  // { name: "설정", href: "/dashboard/settings", icon: Settings },
 ]
 
 interface SidebarProps {

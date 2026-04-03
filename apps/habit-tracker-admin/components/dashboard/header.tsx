@@ -31,11 +31,7 @@ interface HeaderProps {
   onMenuClick: () => void
 }
 
-const notifications = [
-  { id: 1, title: "서버 연결 완료", time: "방금 전", unread: true },
-  { id: 2, title: "새 체크인 기록됨", time: "1시간 전", unread: true },
-  { id: 3, title: "월간 리포트 생성됨", time: "3시간 전", unread: false },
-]
+const notifications: any = []
 
 export function Header({ sidebarCollapsed, onMenuClick }: HeaderProps) {
   const { resolvedTheme, setTheme } = useTheme()
@@ -46,7 +42,7 @@ export function Header({ sidebarCollapsed, onMenuClick }: HeaderProps) {
     setMounted(true)
   }, [])
 
-  const unreadCount = notifications.filter((n) => n.unread).length
+  const unreadCount = notifications?.filter((n: any) => n.unread).length
 
   return (
     <header
@@ -106,7 +102,7 @@ export function Header({ sidebarCollapsed, onMenuClick }: HeaderProps) {
         </Button>
 
         {/* Notifications */}
-        <DropdownMenu>
+        {/* <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button
               variant="ghost"
@@ -154,10 +150,10 @@ export function Header({ sidebarCollapsed, onMenuClick }: HeaderProps) {
               </DropdownMenuItem>
             ))}
           </DropdownMenuContent>
-        </DropdownMenu>
+        </DropdownMenu> */}
 
         {/* User Menu */}
-        <DropdownMenu>
+        {/* <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" className="relative h-9 w-9 rounded-full">
               <Avatar className="h-9 w-9">
@@ -188,7 +184,7 @@ export function Header({ sidebarCollapsed, onMenuClick }: HeaderProps) {
               <span>로그아웃</span>
             </DropdownMenuItem>
           </DropdownMenuContent>
-        </DropdownMenu>
+        </DropdownMenu> */}
       </div>
     </header>
   )
