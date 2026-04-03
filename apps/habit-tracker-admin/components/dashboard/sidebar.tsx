@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { usePathname } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
@@ -15,6 +15,7 @@ import {
   ChevronLeft,
   ChevronRight,
   CheckSquare,
+  LogOut,
 } from "lucide-react"
 
 const navigation = [
@@ -32,6 +33,13 @@ interface SidebarProps {
 
 export function Sidebar({ collapsed, onToggle }: SidebarProps) {
   const pathname = usePathname()
+  const router = useRouter()
+
+  async function handleLogout() {
+    await fetch("/api/auth/logout", { method: "POST" })
+    router.push("/login")
+    router.refresh()
+  }
 
   return (
     <TooltipProvider delayDuration={0}>
@@ -94,8 +102,17 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
           </nav>
         </ScrollArea>
 
-        {/* Collapse Button */}
-        <div className="border-t border-sidebar-border p-2">
+        {/* Bottom buttons */}
+        <div className="border-t border-sidebar-border p-2 flex flex-col gap-1">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="w-full justify-start text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground"
+            onClick={handleLogout}
+          >
+            <LogOut className="h-4 w-4 shrink-0" />
+            {!collapsed && <span className="ml-2">로그아웃</span>}
+          </Button>
           <Button
             variant="ghost"
             size="sm"
