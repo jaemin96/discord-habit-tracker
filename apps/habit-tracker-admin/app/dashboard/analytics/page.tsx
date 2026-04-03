@@ -7,8 +7,13 @@ import { RevenueChart } from "@/components/dashboard/charts/revenue-chart"
 import { UserActivityChart } from "@/components/dashboard/charts/user-activity-chart"
 import { SalesBreakdownChart } from "@/components/dashboard/charts/sales-breakdown-chart"
 import { ReportBreakdownChart } from "@/components/dashboard/charts/report-breakdown-chart"
-import { Camera, Briefcase, Dumbbell, FileText, Loader2 } from "lucide-react"
+import { Camera, Briefcase, Dumbbell, FileText, Languages, Loader2 } from "lucide-react"
 import { api, OverviewStats, TypeBreakdown } from "@/lib/api"
+
+const LANGUAGE_META: Record<string, { emoji: string; label: string }> = {
+  japanese: { emoji: "🇯🇵", label: "일본어" },
+  english: { emoji: "🇺🇸", label: "영어" },
+}
 
 function TypeCard({
   title,
@@ -19,6 +24,8 @@ function TypeCard({
   monthly,
   isReport,
   reportBreakdown,
+  isLanguage,
+  languageBreakdown,
 }: {
   title: string
   icon: React.ElementType
@@ -28,6 +35,8 @@ function TypeCard({
   monthly: number
   isReport?: boolean
   reportBreakdown?: { daily: { d: number; w: number; m: number }; weekly: { d: number; w: number; m: number }; monthly: { d: number; w: number; m: number } }
+  isLanguage?: boolean
+  languageBreakdown?: { langs: { key: string; d: number; w: number; m: number }[] }
 }) {
   return (
     <Card>
@@ -71,6 +80,21 @@ function TypeCard({
                 ))}
               </div>
             )}
+            {isLanguage && languageBreakdown && languageBreakdown.langs.length > 0 && (
+              <div className="border-t border-border pt-2 space-y-1.5">
+                {languageBreakdown.langs.map(({ key, d, w, m }) => {
+                  const meta = LANGUAGE_META[key] ?? { emoji: "🌐", label: key }
+                  return (
+                    <div key={key} className="grid grid-cols-4 items-center gap-1 text-xs">
+                      <span className="text-muted-foreground font-medium">{meta.emoji} {meta.label}</span>
+                      <span className="text-center text-foreground font-medium">{d}회</span>
+                      <span className="text-center text-foreground font-medium">{w}회</span>
+                      <span className="text-center text-foreground font-medium">{m}회</span>
+                    </div>
+                  )
+                })}
+              </div>
+            )}
           </div>
         )}
       </CardContent>
@@ -95,7 +119,7 @@ export default function AnalyticsPage() {
 
   // 이번 달 기준 비율 계산용
   const monthTotal = m
-    ? m.camera_out + m.work_disconnect + m.workout + m.report.total
+    ? m.camera_out + m.work_disconnect + m.workout + m.report.total + (m.language_study?.total ?? 0)
     : 0
 
   const typeMetrics = [
@@ -103,6 +127,21 @@ export default function AnalyticsPage() {
     { title: "업무 외 학습", icon: Briefcase, daily: d?.work_disconnect ?? 0, weekly: w?.work_disconnect ?? 0, monthly: m?.work_disconnect ?? 0 },
     { title: "운동", icon: Dumbbell, daily: d?.workout ?? 0, weekly: w?.workout ?? 0, monthly: m?.workout ?? 0 },
   ]
+
+  // 언어별 세부 분류 (오늘/이번주/이번달 공통 언어 키 합산)
+  const allLangKeys = Array.from(new Set([
+    ...Object.keys(d?.language_study ?? {}).filter((k) => k !== 'total'),
+    ...Object.keys(w?.language_study ?? {}).filter((k) => k !== 'total'),
+    ...Object.keys(m?.language_study ?? {}).filter((k) => k !== 'total'),
+  ]))
+  const langBreakdownData = {
+    langs: allLangKeys.map((key) => ({
+      key,
+      d: (d?.language_study as any)?.[key] ?? 0,
+      w: (w?.language_study as any)?.[key] ?? 0,
+      m: (m?.language_study as any)?.[key] ?? 0,
+    })),
+  }
 
   return (
     <DashboardLayout>
@@ -113,7 +152,7 @@ export default function AnalyticsPage() {
         </div>
 
         {/* 타입별 통계 카드 */}
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-6">
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 mb-6">
           {typeMetrics.map((metric) => (
             <TypeCard
               key={metric.title}
@@ -125,7 +164,9 @@ export default function AnalyticsPage() {
               monthly={metric.monthly}
             />
           ))}
+        </div>
 
+        <div className="grid gap-4 md:grid-cols-2 mb-6">
           {/* 리포트 카드 - 일일/주간/월간 세부 분류 포함 */}
           <TypeCard
             title="리포트"
@@ -140,6 +181,18 @@ export default function AnalyticsPage() {
               weekly: { d: d?.report.weekly ?? 0, w: w?.report.weekly ?? 0, m: m?.report.weekly ?? 0 },
               monthly: { d: d?.report.monthly ?? 0, w: w?.report.monthly ?? 0, m: m?.report.monthly ?? 0 },
             }}
+          />
+
+          {/* 외국어 공부 카드 - 언어별 세부 분류 포함 */}
+          <TypeCard
+            title="외국어 공부"
+            icon={Languages}
+            loading={loading}
+            daily={d?.language_study?.total ?? 0}
+            weekly={w?.language_study?.total ?? 0}
+            monthly={m?.language_study?.total ?? 0}
+            isLanguage
+            languageBreakdown={langBreakdownData}
           />
         </div>
 
@@ -169,6 +222,7 @@ export default function AnalyticsPage() {
                     { title: "업무 외 학습", value: m?.work_disconnect ?? 0, color: "bg-violet-500" },
                     { title: "운동", value: m?.workout ?? 0, color: "bg-amber-500" },
                     { title: "리포트", value: m?.report.total ?? 0, color: "bg-pink-500" },
+                    { title: "외국어 공부", value: m?.language_study?.total ?? 0, color: "bg-sky-500" },
                   ].map((item) => {
                     const pct = monthTotal > 0 ? Math.round((item.value / monthTotal) * 100) : 0
                     return (

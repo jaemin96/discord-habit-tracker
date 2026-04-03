@@ -2,8 +2,9 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 import { Checkin } from '@prisma/client';
 
-export type CheckinType = 'camera_out' | 'work_disconnect' | 'workout' | 'report';
+export type CheckinType = 'camera_out' | 'work_disconnect' | 'workout' | 'report' | 'language_study';
 export type ReportType = 'daily' | 'weekly' | 'monthly';
+export type LanguageType = string; // 추후 언어 추가 가능: 'japanese' | 'english' | ...
 
 @Injectable()
 export class CheckinService {
@@ -13,6 +14,7 @@ export class CheckinService {
     userId: string,
     type: CheckinType,
     reportType?: ReportType,
+    languageType?: LanguageType,
   ): Promise<boolean> {
     const now = new Date();
 
@@ -51,6 +53,18 @@ export class CheckinService {
       return !!existing;
     }
 
+    if (type === 'language_study' && languageType) {
+      const existing = await this.prisma.checkin.findFirst({
+        where: {
+          userId,
+          type,
+          date: { gte: rangeStart, lte: rangeEnd },
+          customFields: { path: ['languageType'], equals: languageType },
+        },
+      });
+      return !!existing;
+    }
+
     const existing = await this.prisma.checkin.findFirst({
       where: {
         userId,
@@ -67,13 +81,19 @@ export class CheckinService {
     type: CheckinType,
     memo?: string,
     reportType?: ReportType,
+    languageType?: LanguageType,
   ): Promise<Checkin> {
+    const customFields = reportType
+      ? { reportType }
+      : languageType
+        ? { languageType }
+        : undefined;
     return this.prisma.checkin.create({
       data: {
         userId,
         type,
         description: memo,
-        customFields: reportType ? { reportType } : undefined,
+        customFields,
       },
     });
   }
@@ -103,6 +123,7 @@ export class CheckinService {
     work_disconnect: number;
     workout: number;
     report: { total: number; daily: number; weekly: number; monthly: number };
+    language_study: { total: number; [lang: string]: number };
     // 월(0)~일(6) 인덱스, 해당 날에 체크인한 타입 목록
     dailyTypes: Record<number, CheckinType[]>;
     weekStart: Date;
@@ -135,6 +156,13 @@ export class CheckinService {
       monthly: reports.filter((c) => (c.customFields as any)?.reportType === 'monthly').length,
     };
 
+    const languageCheckins = checkins.filter((c) => c.type === 'language_study');
+    const languageCount: { total: number; [lang: string]: number } = { total: languageCheckins.length };
+    for (const c of languageCheckins) {
+      const lang = (c.customFields as any)?.languageType;
+      if (lang) languageCount[lang] = (languageCount[lang] || 0) + 1;
+    }
+
     // 요일별 체크인 타입 집계 (0=월 ~ 6=일)
     const dailyTypes: Record<number, CheckinType[]> = {
       0: [], 1: [], 2: [], 3: [], 4: [], 5: [], 6: [],
@@ -154,6 +182,7 @@ export class CheckinService {
       work_disconnect,
       workout,
       report: reportCount,
+      language_study: languageCount,
       dailyTypes,
       weekStart: startOfWeek,
     };

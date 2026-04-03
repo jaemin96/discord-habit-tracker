@@ -15,14 +15,14 @@ import { api } from "@/lib/api"
 import { Loader2 } from "lucide-react"
 
 const LIGHT_COLORS = {
-  palette: ["#22c55e", "#8b5cf6", "#f59e0b", "#ec4899"],
+  palette: ["#22c55e", "#8b5cf6", "#f59e0b", "#ec4899", "#0ea5e9"],
   grid: "#e2e8f0",
   text: "#64748b",
   tooltipBg: "#ffffff",
 }
 
 const DARK_COLORS = {
-  palette: ["#4ade80", "#a78bfa", "#fbbf24", "#f472b6"],
+  palette: ["#4ade80", "#a78bfa", "#fbbf24", "#f472b6", "#38bdf8"],
   grid: "#334155",
   text: "#94a3b8",
   tooltipBg: "#1e293b",
@@ -30,7 +30,7 @@ const DARK_COLORS = {
 
 export function SalesBreakdownChart() {
   const [mounted, setMounted] = useState(false)
-  const [breakdown, setBreakdown] = useState<{ camera_out: number; work_disconnect: number; workout: number; report: { total: number } }>({ camera_out: 0, work_disconnect: 0, workout: 0, report: { total: 0 } })
+  const [breakdown, setBreakdown] = useState<{ camera_out: number; work_disconnect: number; workout: number; report: { total: number }; language_study: { total: number } }>({ camera_out: 0, work_disconnect: 0, workout: 0, report: { total: 0 }, language_study: { total: 0 } })
   const [loading, setLoading] = useState(true)
   const { resolvedTheme } = useTheme()
 
@@ -49,6 +49,7 @@ export function SalesBreakdownChart() {
     { name: "업무 외 학습", value: breakdown.work_disconnect },
     { name: "운동", value: breakdown.workout },
     { name: "리포트", value: breakdown.report.total },
+    { name: "외국어 공부", value: breakdown.language_study?.total ?? 0 },
   ].filter((d) => d.value > 0)
 
   const total = data.reduce((s, d) => s + d.value, 0)

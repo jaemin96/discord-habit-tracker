@@ -14,6 +14,12 @@ const TYPE_LABEL: Record<string, { label: string; emoji: string; variant: "defau
   work_disconnect: { label: "업무 외 학습", emoji: "📚", variant: "secondary" },
   workout: { label: "운동", emoji: "💪", variant: "outline" },
   report: { label: "리포트", emoji: "📝", variant: "destructive" },
+  language_study: { label: "외국어 공부", emoji: "🌐", variant: "secondary" },
+}
+
+const LANGUAGE_LABEL: Record<string, { emoji: string; label: string }> = {
+  japanese: { emoji: "🇯🇵", label: "일본어" },
+  english: { emoji: "🇺🇸", label: "영어" },
 }
 
 export function RecentCheckins() {
@@ -44,7 +50,8 @@ export function RecentCheckins() {
           <div className="space-y-3">
             {checkins.map((c) => {
               const meta = TYPE_LABEL[c.type] ?? { label: c.type, emoji: "•", variant: "outline" as const }
-              const reportType = (c.customFields as any)?.reportType
+              const reportType = c.customFields?.reportType
+              const languageType = c.customFields?.languageType
               return (
                 <div key={c.id} className="flex items-center justify-between py-2 border-b border-border/50 last:border-0">
                   <div className="flex items-center gap-3 min-w-0">
@@ -69,6 +76,7 @@ export function RecentCheckins() {
                         <Badge variant={meta.variant} className="text-xs">
                           {meta.emoji} {meta.label}
                           {reportType && ` (${reportType})`}
+                          {languageType && ` ${LANGUAGE_LABEL[languageType]?.emoji ?? ""} ${LANGUAGE_LABEL[languageType]?.label ?? languageType}`}
                         </Badge>
                       </div>
                       {c.description && (

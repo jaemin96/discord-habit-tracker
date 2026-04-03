@@ -41,27 +41,38 @@ export class TodayCheckinCommand implements ICommand {
         work_disconnect: { emoji: '📚', label: '업무 외 학습' },
         workout: { emoji: '🏋️', label: '운동' },
         report: { emoji: '📋', label: '보고서 작성' },
+        language_study: { emoji: '🌐', label: '외국어 공부' },
       };
       const REPORT_LABEL: Record<string, string> = {
         daily: '일일보고',
         weekly: '주간보고',
         monthly: '월간보고',
       };
+      const LANGUAGE_LABEL: Record<string, { emoji: string; label: string }> = {
+        japanese: { emoji: '🇯🇵', label: '일본어' },
+        english: { emoji: '🇺🇸', label: '영어' },
+      };
 
       const lines = checkins.map((c) => {
         const meta = TYPE_META[c.type] ?? { emoji: '✅', label: c.type };
         const reportType = (c.customFields as any)?.reportType;
+        const languageType = (c.customFields as any)?.languageType;
         const label =
           c.type === 'report' && reportType
             ? REPORT_LABEL[reportType] ?? meta.label
-            : meta.label;
+            : c.type === 'language_study' && languageType
+              ? `${LANGUAGE_LABEL[languageType]?.emoji ?? '🌐'} ${LANGUAGE_LABEL[languageType]?.label ?? languageType}`
+              : meta.label;
         const time = new Date(c.date).toLocaleTimeString('ko-KR', {
           timeZone: 'Asia/Seoul',
           hour: '2-digit',
           minute: '2-digit',
         });
         const memo = c.description ? ` — ${c.description}` : '';
-        return `${meta.emoji} **${label}** ${time}${memo}`;
+        const displayLabel = c.type === 'language_study' && languageType
+          ? label  // 이미 이모지+언어명 포함
+          : `${meta.emoji} ${label}`;
+        return `${displayLabel} ${time}${memo}`;
       });
 
       embed

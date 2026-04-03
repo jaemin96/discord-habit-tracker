@@ -67,6 +67,22 @@ export class WeeklyCheckinCommand implements ICommand {
 
     const calendar = buildCalendarBlock(stats.weekStart, stats.dailyTypes);
 
+    const LANGUAGE_META: Record<string, { emoji: string; label: string }> = {
+      japanese: { emoji: '🇯🇵', label: '일본어' },
+      english: { emoji: '🇺🇸', label: '영어' },
+    };
+    const langLines = stats.language_study.total > 0
+      ? [
+          `🌐 외국어 공부 · ${stats.language_study.total}회`,
+          ...Object.entries(stats.language_study)
+            .filter(([k, v]) => k !== 'total' && v > 0)
+            .map(([lang, cnt]) => {
+              const m = LANGUAGE_META[lang] ?? { emoji: '🌐', label: lang };
+              return `　${m.emoji} ${m.label} · ${cnt}회`;
+            }),
+        ].join('\n')
+      : null;
+
     const typeStats = [
       stats.camera_out > 0 ? `📸 카메라외출 · ${stats.camera_out}회` : null,
       stats.work_disconnect > 0 ? `📚 업무 외 학습 · ${stats.work_disconnect}회` : null,
@@ -81,6 +97,7 @@ export class WeeklyCheckinCommand implements ICommand {
             .filter(Boolean)
             .join('\n')
         : null,
+      langLines,
     ]
       .filter(Boolean)
       .join('\n\n');

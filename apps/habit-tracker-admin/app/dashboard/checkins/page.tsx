@@ -17,6 +17,12 @@ const TYPE_META: Record<string, { label: string; emoji: string; variant: "defaul
   work_disconnect: { label: "업무 외 학습", emoji: "📚", variant: "secondary" },
   workout: { label: "운동", emoji: "💪", variant: "outline" },
   report: { label: "리포트", emoji: "📝", variant: "destructive" },
+  language_study: { label: "외국어 공부", emoji: "🌐", variant: "secondary" },
+}
+
+const LANGUAGE_LABEL: Record<string, { emoji: string; label: string }> = {
+  japanese: { emoji: "🇯🇵", label: "일본어" },
+  english: { emoji: "🇺🇸", label: "영어" },
 }
 
 const PAGE_SIZE = 20
@@ -112,7 +118,8 @@ export default function CheckinsPage() {
                     <tbody>
                       {checkins.map((c) => {
                         const meta = TYPE_META[c.type] ?? { label: c.type, emoji: "•", variant: "outline" as const }
-                        const reportType = (c.customFields as any)?.reportType
+                        const reportType = c.customFields?.reportType
+                        const languageType = c.customFields?.languageType
                         return (
                           <tr key={c.id} className="border-b border-border/50 hover:bg-muted/30 transition-colors">
                             <td className="py-3 px-4 text-muted-foreground whitespace-nowrap">
@@ -149,6 +156,7 @@ export default function CheckinsPage() {
                                 <Badge variant={meta.variant} className="text-xs">
                                   {meta.label}
                                   {reportType && ` · ${reportType}`}
+                                  {languageType && ` · ${LANGUAGE_LABEL[languageType]?.emoji ?? ""} ${LANGUAGE_LABEL[languageType]?.label ?? languageType}`}
                                 </Badge>
                               </div>
                             </td>

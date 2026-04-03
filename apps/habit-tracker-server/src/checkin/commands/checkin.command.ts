@@ -5,19 +5,25 @@ import {
   EmbedBuilder,
 } from 'discord.js';
 import { ICommand } from '../../discord/commands/command.interface';
-import { CheckinService, CheckinType, ReportType } from '../checkin.service';
+import { CheckinService, CheckinType, LanguageType, ReportType } from '../checkin.service';
 
 const TYPE_META: Record<CheckinType, { emoji: string; label: string }> = {
   camera_out: { emoji: '📸', label: '카메라외출' },
   work_disconnect: { emoji: '📚', label: '업무 외 학습' },
   workout: { emoji: '🏋️', label: '운동' },
   report: { emoji: '📋', label: '보고서 작성' },
+  language_study: { emoji: '🌐', label: '외국어 공부' },
 };
 
 const REPORT_TYPE_META: Record<ReportType, { emoji: string; label: string }> = {
   daily: { emoji: '📝', label: '일일보고' },
   weekly: { emoji: '📊', label: '주간보고' },
   monthly: { emoji: '📅', label: '월간보고' },
+};
+
+const LANGUAGE_META: Record<string, { emoji: string; label: string }> = {
+  japanese: { emoji: '🇯🇵', label: '일본어' },
+  english: { emoji: '🇺🇸', label: '영어' },
 };
 
 @Injectable()
@@ -41,6 +47,7 @@ export class CheckinCommand implements ICommand {
             { name: '📚 업무 외 학습', value: 'work_disconnect' },
             { name: '🏋️ 운동', value: 'workout' },
             { name: '📋 보고서 작성', value: 'report' },
+            { name: '🌐 외국어 공부', value: 'language_study' },
           ),
       )
       .addStringOption((option) =>
@@ -52,6 +59,16 @@ export class CheckinCommand implements ICommand {
             { name: '📝 일일보고', value: 'daily' },
             { name: '📊 주간보고', value: 'weekly' },
             { name: '📅 월간보고', value: 'monthly' },
+          ),
+      )
+      .addStringOption((option) =>
+        option
+          .setName('언어종류')
+          .setDescription('🌐 외국어 공부 타입 선택 시 필수 — 일본어/영어 등')
+          .setRequired(false)
+          .addChoices(
+            { name: '🇯🇵 일본어', value: 'japanese' },
+            { name: '🇺🇸 영어', value: 'english' },
           ),
       )
       .addStringOption((option) =>
@@ -68,6 +85,7 @@ export class CheckinCommand implements ICommand {
 
     const type = interaction.options.getString('타입', true) as CheckinType;
     const reportType = interaction.options.getString('보고서종류') as ReportType | null;
+    const languageType = interaction.options.getString('언어종류') as LanguageType | null;
     const memo = interaction.options.getString('메모') ?? undefined;
     const userId = interaction.user.id;
 
@@ -76,14 +94,21 @@ export class CheckinCommand implements ICommand {
       return;
     }
 
-    const LIMITED_TYPES: CheckinType[] = ['work_disconnect', 'report'];
+    if (type === 'language_study' && !languageType) {
+      await interaction.editReply('🌐 외국어 공부 체크인 시 **언어종류** (일본어/영어 등)를 선택해주세요.');
+      return;
+    }
+
+    const LIMITED_TYPES: CheckinType[] = ['work_disconnect', 'report', 'language_study'];
     if (LIMITED_TYPES.includes(type)) {
-      const already = await this.checkinService.hasTodayCheckin(userId, type, reportType ?? undefined);
+      const already = await this.checkinService.hasTodayCheckin(userId, type, reportType ?? undefined, languageType ?? undefined);
       if (already) {
         const label =
           type === 'report' && reportType
             ? REPORT_TYPE_META[reportType].label
-            : TYPE_META[type].label;
+            : type === 'language_study' && languageType
+              ? (LANGUAGE_META[languageType]?.label ?? languageType)
+              : TYPE_META[type].label;
         const period =
           reportType === 'weekly' ? '이번 주' :
           reportType === 'monthly' ? '이번 달' : '오늘';
@@ -92,7 +117,7 @@ export class CheckinCommand implements ICommand {
       }
     }
 
-    const checkin = await this.checkinService.create(userId, type, memo, reportType ?? undefined);
+    const checkin = await this.checkinService.create(userId, type, memo, reportType ?? undefined, languageType ?? undefined);
 
     const { emoji, label } = TYPE_META[type];
     const timeStr = new Date(checkin.date).toLocaleString('ko-KR', {
@@ -102,7 +127,9 @@ export class CheckinCommand implements ICommand {
     const displayLabel =
       type === 'report' && reportType
         ? `${REPORT_TYPE_META[reportType].emoji} ${REPORT_TYPE_META[reportType].label}`
-        : `${emoji} ${label}`;
+        : type === 'language_study' && languageType
+          ? `${LANGUAGE_META[languageType]?.emoji ?? '🌐'} ${LANGUAGE_META[languageType]?.label ?? languageType}`
+          : `${emoji} ${label}`;
 
     const embed = new EmbedBuilder()
       .setColor(0x00b894)

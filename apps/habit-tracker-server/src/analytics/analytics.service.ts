@@ -8,6 +8,11 @@ export interface ReportStats {
   total: number;
 }
 
+export interface LanguageStudyStats {
+  total: number;
+  [lang: string]: number;
+}
+
 export interface PeriodStats {
   period: 'weekly' | 'monthly';
   startDate: Date;
@@ -17,6 +22,7 @@ export interface PeriodStats {
   work_disconnect: number;
   workout: number;
   report: ReportStats;
+  language_study: LanguageStudyStats;
 }
 
 const CACHE_TTL_MS = 1000 * 60 * 30; // 30분
@@ -81,6 +87,13 @@ export class AnalyticsService {
       total: reports.length,
     };
 
+    const langCheckins = checkins.filter((c) => c.type === 'language_study');
+    const language_study: LanguageStudyStats = { total: langCheckins.length };
+    for (const c of langCheckins) {
+      const lang = (c.customFields as any)?.languageType;
+      if (lang) language_study[lang] = (language_study[lang] || 0) + 1;
+    }
+
     const result: PeriodStats = {
       period,
       startDate,
@@ -90,6 +103,7 @@ export class AnalyticsService {
       work_disconnect,
       workout,
       report,
+      language_study,
     };
 
     await this.setCache(userId, period, startDate, result);
@@ -167,12 +181,12 @@ export class AnalyticsService {
     ]);
 
     // 주간 일별 집계
-    const dailyMap: Record<string, { total: number; camera_out: number; work_disconnect: number; workout: number; report: number }> = {};
+    const dailyMap: Record<string, { total: number; camera_out: number; work_disconnect: number; workout: number; report: number; language_study: number }> = {};
     for (let i = 0; i < 7; i++) {
       const d = new Date(weekStart);
       d.setDate(weekStart.getDate() + i);
       const key = d.toISOString().split('T')[0];
-      dailyMap[key] = { total: 0, camera_out: 0, work_disconnect: 0, workout: 0, report: 0 };
+      dailyMap[key] = { total: 0, camera_out: 0, work_disconnect: 0, workout: 0, report: 0, language_study: 0 };
     }
     for (const c of weekCheckins) {
       const key = new Date(c.date).toISOString().split('T')[0];
@@ -186,6 +200,12 @@ export class AnalyticsService {
 
     const buildBreakdown = (checkins: { type: string; customFields: any }[]) => {
       const reports = checkins.filter((c) => c.type === 'report');
+      const langCheckins = checkins.filter((c) => c.type === 'language_study');
+      const language_study: LanguageStudyStats = { total: langCheckins.length };
+      for (const c of langCheckins) {
+        const lang = (c.customFields as any)?.languageType;
+        if (lang) language_study[lang] = (language_study[lang] || 0) + 1;
+      }
       return {
         camera_out: checkins.filter((c) => c.type === 'camera_out').length,
         work_disconnect: checkins.filter((c) => c.type === 'work_disconnect').length,
@@ -196,6 +216,7 @@ export class AnalyticsService {
           weekly: reports.filter((c) => (c.customFields as any)?.reportType === 'weekly').length,
           monthly: reports.filter((c) => (c.customFields as any)?.reportType === 'monthly').length,
         },
+        language_study,
       };
     };
 

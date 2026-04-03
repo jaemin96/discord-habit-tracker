@@ -1,6 +1,6 @@
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4003';
 
-export type CheckinType = 'camera_out' | 'work_disconnect' | 'workout' | 'report';
+export type CheckinType = 'camera_out' | 'work_disconnect' | 'workout' | 'report' | 'language_study';
 
 export interface ReportStats {
   daily: number;
@@ -20,6 +20,11 @@ export interface PeriodStats {
   report: ReportStats;
 }
 
+export interface LanguageStudyStats {
+  total: number;
+  [lang: string]: number;
+}
+
 export interface DayTrend {
   date: string;
   total: number;
@@ -27,6 +32,7 @@ export interface DayTrend {
   work_disconnect: number;
   workout: number;
   report: number;
+  language_study: number;
 }
 
 export interface TypeBreakdown {
@@ -34,6 +40,7 @@ export interface TypeBreakdown {
   work_disconnect: number;
   workout: number;
   report: ReportStats;
+  language_study: LanguageStudyStats;
 }
 
 export interface OverviewStats {
@@ -60,7 +67,7 @@ export interface Checkin {
   date: string;
   type: CheckinType;
   description: string | null;
-  customFields: { reportType?: string } | null;
+  customFields: { reportType?: string; languageType?: string } | null;
   user: DiscordUser | null;
 }
 
