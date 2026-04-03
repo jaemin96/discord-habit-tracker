@@ -46,7 +46,7 @@ export function SalesBreakdownChart() {
 
   const data = [
     { name: "카메라외출", value: breakdown.camera_out },
-    { name: "업무종료", value: breakdown.work_disconnect },
+    { name: "업무 외 학습", value: breakdown.work_disconnect },
     { name: "운동", value: breakdown.workout },
     { name: "리포트", value: breakdown.report.total },
   ].filter((d) => d.value > 0)

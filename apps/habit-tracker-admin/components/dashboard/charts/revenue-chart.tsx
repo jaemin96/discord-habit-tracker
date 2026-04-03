@@ -59,7 +59,7 @@ export function RevenueChart() {
     day: DAY_LABELS[i] ?? d.date.slice(5),
     전체: d.total,
     카메라외출: d.camera_out,
-    업무종료: d.work_disconnect,
+    업무외학습: d.work_disconnect,
     운동: d.workout,
     리포트: d.report,
   }))
@@ -80,8 +80,8 @@ export function RevenueChart() {
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                 <defs>
-                  {(["전체", "카메라외출", "업무종료", "운동", "리포트"] as const).map((key) => {
-                    const colorKey = key === "전체" ? "total" : key === "카메라외출" ? "camera_out" : key === "업무종료" ? "work_disconnect" : key === "운동" ? "workout" : "report"
+                  {(["전체", "카메라외출", "업무외학습", "운동", "리포트"] as const).map((key) => {
+                    const colorKey = key === "전체" ? "total" : key === "카메라외출" ? "camera_out" : key === "업무외학습" ? "work_disconnect" : key === "운동" ? "workout" : "report"
                     return (
                       <linearGradient key={key} id={`color_${colorKey}`} x1="0" y1="0" x2="0" y2="1">
                         <stop offset="5%" stopColor={(colors as any)[colorKey]} stopOpacity={0.3} />
@@ -115,7 +115,7 @@ export function RevenueChart() {
                 />
                 <Area type="monotone" dataKey="전체" stroke={colors.total} strokeWidth={2} fillOpacity={1} fill="url(#color_total)" />
                 <Area type="monotone" dataKey="카메라외출" stroke={colors.camera_out} strokeWidth={2} fillOpacity={1} fill="url(#color_camera_out)" />
-                <Area type="monotone" dataKey="업무종료" stroke={colors.work_disconnect} strokeWidth={2} fillOpacity={1} fill="url(#color_work_disconnect)" />
+                <Area type="monotone" dataKey="업무외학습" stroke={colors.work_disconnect} strokeWidth={2} fillOpacity={1} fill="url(#color_work_disconnect)" />
                 <Area type="monotone" dataKey="운동" stroke={colors.workout} strokeWidth={2} fillOpacity={1} fill="url(#color_workout)" />
                 <Area type="monotone" dataKey="리포트" stroke={colors.report} strokeWidth={2} fillOpacity={1} fill="url(#color_report)" />
               </AreaChart>
@@ -126,7 +126,7 @@ export function RevenueChart() {
           {[
             { label: "전체", colorKey: "total" },
             { label: "카메라외출", colorKey: "camera_out" },
-            { label: "업무종료", colorKey: "work_disconnect" },
+            { label: "업무 외 학습", colorKey: "work_disconnect" },
             { label: "운동", colorKey: "workout" },
             { label: "리포트", colorKey: "report" },
           ].map(({ label, colorKey }) => (

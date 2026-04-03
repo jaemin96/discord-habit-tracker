@@ -100,7 +100,7 @@ export default function AnalyticsPage() {
 
   const typeMetrics = [
     { title: "카메라외출", icon: Camera, daily: d?.camera_out ?? 0, weekly: w?.camera_out ?? 0, monthly: m?.camera_out ?? 0 },
-    { title: "업무종료", icon: Briefcase, daily: d?.work_disconnect ?? 0, weekly: w?.work_disconnect ?? 0, monthly: m?.work_disconnect ?? 0 },
+    { title: "업무 외 학습", icon: Briefcase, daily: d?.work_disconnect ?? 0, weekly: w?.work_disconnect ?? 0, monthly: m?.work_disconnect ?? 0 },
     { title: "운동", icon: Dumbbell, daily: d?.workout ?? 0, weekly: w?.workout ?? 0, monthly: m?.workout ?? 0 },
   ]
 
@@ -166,7 +166,7 @@ export default function AnalyticsPage() {
                 <div className="space-y-4">
                   {[
                     { title: "카메라외출", value: m?.camera_out ?? 0, color: "bg-green-500" },
-                    { title: "업무종료", value: m?.work_disconnect ?? 0, color: "bg-violet-500" },
+                    { title: "업무 외 학습", value: m?.work_disconnect ?? 0, color: "bg-violet-500" },
                     { title: "운동", value: m?.workout ?? 0, color: "bg-amber-500" },
                     { title: "리포트", value: m?.report.total ?? 0, color: "bg-pink-500" },
                   ].map((item) => {

@@ -56,7 +56,7 @@ export function UserActivityChart() {
   const chartData = data.map((d, i) => ({
     day: DAY_LABELS[i] ?? d.date.slice(5),
     카메라외출: d.camera_out,
-    업무종료: d.work_disconnect,
+    업무외학습: d.work_disconnect,
     운동: d.workout,
     리포트: d.report,
   }))
@@ -101,7 +101,7 @@ export function UserActivityChart() {
                   cursor={{ fill: colors.cursor }}
                 />
                 <Bar dataKey="카메라외출" fill={colors.primary} radius={[4, 4, 0, 0]} stackId="a" />
-                <Bar dataKey="업무종료" fill={colors.secondary} radius={[0, 0, 0, 0]} stackId="a" />
+                <Bar dataKey="업무외학습" fill={colors.secondary} radius={[0, 0, 0, 0]} stackId="a" />
                 <Bar dataKey="운동" fill={colors.tertiary} radius={[0, 0, 0, 0]} stackId="a" />
                 <Bar dataKey="리포트" fill="#ec4899" radius={[4, 4, 0, 0]} stackId="a" />
               </BarChart>
@@ -115,7 +115,7 @@ export function UserActivityChart() {
           </div>
           <div className="flex items-center gap-2">
             <div className="h-3 w-3 rounded-full" style={{ backgroundColor: colors.secondary }} />
-            <span className="text-sm text-muted-foreground">업무종료</span>
+            <span className="text-sm text-muted-foreground">업무 외 학습</span>
           </div>
           <div className="flex items-center gap-2">
             <div className="h-3 w-3 rounded-full" style={{ backgroundColor: colors.tertiary }} />

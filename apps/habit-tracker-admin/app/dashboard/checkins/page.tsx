@@ -14,7 +14,7 @@ import { ko } from "date-fns/locale"
 
 const TYPE_META: Record<string, { label: string; emoji: string; variant: "default" | "secondary" | "outline" | "destructive" }> = {
   camera_out: { label: "카메라외출", emoji: "📷", variant: "default" },
-  work_disconnect: { label: "업무종료", emoji: "💼", variant: "secondary" },
+  work_disconnect: { label: "업무 외 학습", emoji: "📚", variant: "secondary" },
   workout: { label: "운동", emoji: "💪", variant: "outline" },
   report: { label: "리포트", emoji: "📝", variant: "destructive" },
 }
