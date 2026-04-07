@@ -233,6 +233,61 @@ export class AnalyticsService {
     };
   }
 
+  // ── 기간 범위 통계 (startDate ~ endDate) ──────────────────
+  async getRangeStats(startDate: Date, endDate: Date) {
+    const checkins = await this.prisma.checkin.findMany({
+      where: { date: { gte: startDate, lte: endDate } },
+      select: { date: true, type: true, customFields: true },
+      orderBy: { date: 'asc' },
+    });
+
+    const buildBreakdown = (items: { type: string; customFields: any }[]) => {
+      const reports = items.filter((c) => c.type === 'report');
+      const langCheckins = items.filter((c) => c.type === 'language_study');
+      const language_study: LanguageStudyStats = { total: langCheckins.length };
+      for (const c of langCheckins) {
+        const lang = (c.customFields as any)?.languageType;
+        if (lang) language_study[lang] = (language_study[lang] || 0) + 1;
+      }
+      return {
+        camera_out: items.filter((c) => c.type === 'camera_out').length,
+        work_disconnect: items.filter((c) => c.type === 'work_disconnect').length,
+        workout: items.filter((c) => c.type === 'workout').length,
+        report: {
+          total: reports.length,
+          daily: reports.filter((c) => (c.customFields as any)?.reportType === 'daily').length,
+          weekly: reports.filter((c) => (c.customFields as any)?.reportType === 'weekly').length,
+          monthly: reports.filter((c) => (c.customFields as any)?.reportType === 'monthly').length,
+        },
+        language_study,
+      };
+    };
+
+    // 일별 트렌드
+    const dailyMap: Record<string, { total: number; camera_out: number; work_disconnect: number; workout: number; report: number; language_study: number }> = {};
+    const cur = new Date(startDate);
+    while (cur <= endDate) {
+      const key = cur.toISOString().split('T')[0];
+      dailyMap[key] = { total: 0, camera_out: 0, work_disconnect: 0, workout: 0, report: 0, language_study: 0 };
+      cur.setDate(cur.getDate() + 1);
+    }
+    for (const c of checkins) {
+      const key = new Date(c.date).toISOString().split('T')[0];
+      if (dailyMap[key]) {
+        dailyMap[key].total++;
+        if (c.type in dailyMap[key]) (dailyMap[key] as any)[c.type]++;
+      }
+    }
+
+    return {
+      startDate,
+      endDate,
+      total: checkins.length,
+      breakdown: buildBreakdown(checkins),
+      dailyTrend: Object.entries(dailyMap).map(([date, counts]) => ({ date, ...counts })),
+    };
+  }
+
   // ── 리포트 월별 추이 (최근 12개월) ──────────────────────────
   async getReportMonthlyTrend() {
     const now = new Date();

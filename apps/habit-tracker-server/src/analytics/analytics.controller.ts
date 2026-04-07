@@ -34,6 +34,18 @@ export class AnalyticsController {
     return this.analyticsService.getUserList();
   }
 
+  @Get('range')
+  async range(
+    @Query('startDate') startDate: string,
+    @Query('endDate') endDate: string,
+  ) {
+    const start = new Date(startDate);
+    start.setHours(0, 0, 0, 0);
+    const end = new Date(endDate);
+    end.setHours(23, 59, 59, 999);
+    return this.analyticsService.getRangeStats(start, end);
+  }
+
   @Get('report-monthly-trend')
   async reportMonthlyTrend() {
     return this.analyticsService.getReportMonthlyTrend();
