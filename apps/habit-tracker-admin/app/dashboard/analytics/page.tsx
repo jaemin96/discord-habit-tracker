@@ -3,12 +3,23 @@
 import { useEffect, useState } from "react"
 import { DashboardLayout } from "@/components/dashboard/dashboard-layout"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { RevenueChart } from "@/components/dashboard/charts/revenue-chart"
+import { Button } from "@/components/ui/button"
 import { UserActivityChart } from "@/components/dashboard/charts/user-activity-chart"
 import { SalesBreakdownChart } from "@/components/dashboard/charts/sales-breakdown-chart"
 import { ReportBreakdownChart } from "@/components/dashboard/charts/report-breakdown-chart"
-import { Camera, Briefcase, Dumbbell, FileText, Languages, Loader2 } from "lucide-react"
-import { api, OverviewStats, TypeBreakdown } from "@/lib/api"
+import { RangeTrendChart, TYPE_COLORS, TYPE_KEYS } from "@/components/dashboard/charts/range-trend-chart"
+import { Camera, Briefcase, Dumbbell, FileText, Languages, Loader2, Search } from "lucide-react"
+import { api, OverviewStats, TypeBreakdown, RangeStats } from "@/lib/api"
+
+type Granularity = "day" | "week" | "month" | "year"
+
+const RANGE_TYPE_META = [
+  { key: "camera_out", title: "카메라외출", icon: Camera },
+  { key: "work_disconnect", title: "업무 외 학습", icon: Briefcase },
+  { key: "workout", title: "운동", icon: Dumbbell },
+  { key: "report", title: "리포트", icon: FileText },
+  { key: "language_study", title: "외국어 공부", icon: Languages },
+] as const
 
 const LANGUAGE_META: Record<string, { emoji: string; label: string }> = {
   japanese: { emoji: "🇯🇵", label: "일본어" },
@@ -102,9 +113,42 @@ function TypeCard({
   )
 }
 
+function getDefaultDates() {
+  const end = new Date()
+  const start = new Date()
+  start.setDate(end.getDate() - 29)
+  return {
+    start: start.toISOString().split("T")[0],
+    end: end.toISOString().split("T")[0],
+  }
+}
+
 export default function AnalyticsPage() {
   const [stats, setStats] = useState<OverviewStats | null>(null)
   const [loading, setLoading] = useState(true)
+
+  const defaults = getDefaultDates()
+  const [startDate, setStartDate] = useState(defaults.start)
+  const [endDate, setEndDate] = useState(defaults.end)
+  const [rangeStats, setRangeStats] = useState<RangeStats | null>(null)
+  const [rangeLoading, setRangeLoading] = useState(false)
+  const [rangeError, setRangeError] = useState<string | null>(null)
+  const [activeTypes, setActiveTypes] = useState<Set<string>>(new Set(TYPE_KEYS))
+  const [granularity, setGranularity] = useState<Granularity>("day")
+
+  function toggleType(key: string) {
+    setActiveTypes((prev) => {
+      const next = new Set(prev)
+      if (next.has(key)) {
+        // 마지막 하나는 해제 불가
+        if (next.size === 1) return prev
+        next.delete(key)
+      } else {
+        next.add(key)
+      }
+      return next
+    })
+  }
 
   useEffect(() => {
     api.overview()
@@ -112,6 +156,20 @@ export default function AnalyticsPage() {
       .catch(console.error)
       .finally(() => setLoading(false))
   }, [])
+
+  function handleRangeSearch() {
+    if (!startDate || !endDate) return
+    if (startDate > endDate) {
+      setRangeError("시작일이 종료일보다 늦을 수 없습니다.")
+      return
+    }
+    setRangeError(null)
+    setRangeLoading(true)
+    api.range(startDate, endDate)
+      .then(setRangeStats)
+      .catch(() => setRangeError("데이터를 불러오는 중 오류가 발생했습니다."))
+      .finally(() => setRangeLoading(false))
+  }
 
   const d = stats?.dailyBreakdown
   const w = stats?.weeklyBreakdown
@@ -196,9 +254,109 @@ export default function AnalyticsPage() {
           />
         </div>
 
+        {/* 기간별 통계 */}
+        <div className="mb-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>기간별 통계</CardTitle>
+              <CardDescription>특정 기간의 체크인 통계를 조회합니다.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="flex flex-wrap items-end gap-3 mb-4">
+                <div className="flex flex-col gap-1">
+                  <label className="text-xs text-muted-foreground">시작일</label>
+                  <input
+                    type="date"
+                    value={startDate}
+                    onChange={(e) => setStartDate(e.target.value)}
+                    className="h-9 rounded-md border border-input bg-background px-3 py-1 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring"
+                  />
+                </div>
+                <div className="flex flex-col gap-1">
+                  <label className="text-xs text-muted-foreground">종료일</label>
+                  <input
+                    type="date"
+                    value={endDate}
+                    onChange={(e) => setEndDate(e.target.value)}
+                    className="h-9 rounded-md border border-input bg-background px-3 py-1 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring"
+                  />
+                </div>
+                <Button onClick={handleRangeSearch} disabled={rangeLoading} size="sm" className="gap-2">
+                  {rangeLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
+                  조회
+                </Button>
+              </div>
+              {rangeError && (
+                <p className="text-sm text-destructive mb-3">{rangeError}</p>
+              )}
+              {rangeStats && !rangeLoading && (
+                <div className="space-y-4">
+                  {/* 타입별 카운트 카드 — 클릭으로 차트 필터 토글 */}
+                  <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+                    {RANGE_TYPE_META.map(({ key, title, icon: Icon }) => {
+                      const value =
+                        key === "report"
+                          ? rangeStats.breakdown.report.total
+                          : key === "language_study"
+                          ? rangeStats.breakdown.language_study.total
+                          : (rangeStats.breakdown as any)[key] as number
+                      const isActive = activeTypes.has(key)
+                      const color = TYPE_COLORS[key]
+                      return (
+                        <button
+                          key={key}
+                          onClick={() => toggleType(key)}
+                          className={`flex items-center gap-3 rounded-lg border p-3 text-left transition-all ${
+                            isActive
+                              ? "border-border bg-background shadow-sm"
+                              : "border-border/40 bg-muted/30 opacity-50"
+                          }`}
+                        >
+                          <Icon
+                            className="h-5 w-5 flex-shrink-0"
+                            style={{ color: isActive ? color : undefined }}
+                          />
+                          <div className="min-w-0">
+                            <p className="text-xs text-muted-foreground truncate">{title}</p>
+                            <p className="text-xl font-bold">
+                              {value}
+                              <span className="text-xs font-normal text-muted-foreground ml-1">회</span>
+                            </p>
+                          </div>
+                          {/* 활성 상태 인디케이터 */}
+                          <div
+                            className={`ml-auto h-2 w-2 flex-shrink-0 rounded-full transition-opacity ${isActive ? "opacity-100" : "opacity-0"}`}
+                            style={{ backgroundColor: color }}
+                          />
+                        </button>
+                      )
+                    })}
+                  </div>
+
+                  <div className="flex items-center justify-between text-sm text-muted-foreground px-1">
+                    <span>
+                      {rangeStats.startDate.toString().slice(0, 10)} ~ {rangeStats.endDate.toString().slice(0, 10)}
+                    </span>
+                    <span className="font-medium text-foreground">총 {rangeStats.total}회</span>
+                  </div>
+
+                  <RangeTrendChart
+                    data={rangeStats.dailyTrend}
+                    activeTypes={activeTypes}
+                    granularity={granularity}
+                    onGranularityChange={setGranularity}
+                  />
+                </div>
+              )}
+              {!rangeStats && !rangeLoading && (
+                <p className="text-sm text-muted-foreground text-center py-6">날짜를 선택하고 조회 버튼을 클릭하세요.</p>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+
         {/* Charts */}
         <div className="grid gap-6 lg:grid-cols-2 mb-6">
-          <RevenueChart />
           <UserActivityChart />
           <ReportBreakdownChart />
         </div>

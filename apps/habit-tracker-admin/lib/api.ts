@@ -101,6 +101,14 @@ export interface ReportMonthTrend {
   월간: number;
 }
 
+export interface RangeStats {
+  startDate: string;
+  endDate: string;
+  total: number;
+  breakdown: TypeBreakdown;
+  dailyTrend: DayTrend[];
+}
+
 export const api = {
   overview: () => fetchApi<OverviewStats>('/api/analytics/overview'),
   weekly: (userId: string) => fetchApi<PeriodStats>(`/api/analytics/weekly?userId=${userId}`),
@@ -114,4 +122,6 @@ export const api = {
   },
   users: () => fetchApi<UserStat[]>('/api/analytics/users'),
   reportMonthlyTrend: () => fetchApi<ReportMonthTrend[]>('/api/analytics/report-monthly-trend'),
+  range: (startDate: string, endDate: string) =>
+    fetchApi<RangeStats>(`/api/analytics/range?startDate=${startDate}&endDate=${endDate}`),
 };
